@@ -44,7 +44,7 @@ function buildHtmlDocument(contentHtml: string, isDark: boolean) {
   `;
 }
 
-export function CompanyInfoHtml({ contentHtml }: { contentHtml: string }) {
+export function HtmlContent({ contentHtml }: { contentHtml: string }) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [height, setHeight] = useState(0);

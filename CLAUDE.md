@@ -31,9 +31,15 @@
 | 푸시 알림 | FCM (Firebase Cloud Messaging) — Android/iOS 공용 |
 
 ## 인증
-- 멘토는 Supabase Auth로 로그인한다.
+- 멘토는 Supabase Auth(이메일/비밀번호)로 로그인한다. 화면: `app/(auth)/login.tsx`, `app/(auth)/signup.tsx`. 세션은 `contexts/auth-context.tsx`의 `AuthProvider`가 관리하고, `app/_layout.tsx`가 `Stack.Protected`로 로그인 여부에 따라 `(auth)` ↔ `(tabs)`를 자동 전환한다.
 - admin과 동일한 컨벤션: **`mentors.id` == `auth.uid()`**. 즉 멘토 회원가입 시 발급되는 auth user id를 그대로 `mentors.id`로 사용한다 (admin 저장소의 `is_authenticated_admin_or_mentor()` 등 RLS 헬퍼 함수가 이 전제로 짜여있다).
 - 멘토는 `mentors.is_authenticated = true`가 되어야 정상 이용 가능하다 (관리자가 승인).
+
+### 회원가입 시 mentors 행 자동 생성 (DB 트리거)
+- admin과 멘토 앱은 **같은 `auth.users`를 공유**한다. admin 저장소에는 원래 `auth.users` insert 시 무조건 `admins`에 행을 만드는 `on_admin_signup` 트리거가 (마이그레이션 이력 없이, 대시보드에서 직접) 이미 존재했다. 멘토 앱도 같은 방식으로 회원가입하면 이 트리거가 그대로 발동해 멘토가 `admins`에도 등록되는 문제가 있어, `admin/supabase/migrations/20260717010000_mentor_signup.sql`에서 `raw_user_meta_data->>'account_type'`(`'admin'` | `'mentor'`)로 분기하도록 고쳤다.
+- 그래서 `supabase.auth.signUp()` 호출 시 **반드시** `options.data`에 `account_type: 'mentor'`를 포함해야 한다 (`contexts/auth-context.tsx`의 `signUp` 참고). 빠뜨리면 `on_admin_signup`도 `on_mentor_signup`도 발동하지 않아 `mentors` 행이 아예 생기지 않는다.
+- `on_mentor_signup` 트리거 → `handle_new_mentor_signup()` 함수가 `name`/`phone`/`terms_version_id` 메타데이터를 읽어 `mentors` 행을 `is_authenticated = false`로 생성한다. 클라이언트에서 직접 `mentors`에 insert하지 않는다.
+- **admin 저장소의 "강사 추가"(`admin/app/(dashboard)/mentors/new`) 화면에는 알려진 버그가 있다**: 이메일/비밀번호를 입력해 계정을 만들면 `mentors.id`는 클라이언트에서 생성한 랜덤 UUID를 쓰고, 실제 auth user id는 `mentors.user_id`에 따로 저장한다. `mentors.id == auth.uid()` 전제로 짜인 invitations RLS/RPC와 맞지 않아, 이 경로로 만들어진 계정은 초대를 받을 수 없다. 아직 admin 쪽에서 고치지 않은 채로 남아있다 — 이 저장소 작업과는 무관하지만 혼동하지 말 것.
 
 ## 핵심 도메인 요약 (admin 저장소 CLAUDE.md 발췌 — 전체는 admin/CLAUDE.md 참고)
 
@@ -82,4 +88,6 @@
 ## 미결 사항
 - `mentor_devices` / `push_notifications` 테이블 마이그레이션 (admin 저장소에 추가 예정)
 - 실제 FCM 연동 (Firebase 프로젝트 생성, 서비스 계정 키 관리 위치 결정)
-- 로그인/온보딩 화면, 섭외 목록/상세 화면 구현
+- 섭외 목록/상세 화면 구현
+- 비밀번호 재설정(찾기) 화면 — 아직 없음
+- 프로필 수정 화면(주소/계좌번호/주민번호 등, 회원가입 때는 최소 정보만 받음) — 아직 없음

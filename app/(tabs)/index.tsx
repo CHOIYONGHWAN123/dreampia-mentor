@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet } from 'react-native';
 
-import { CompanyInfoHtml } from '@/components/company-info-html';
+import { HtmlContent } from '@/components/html-content';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -59,7 +59,7 @@ export default function HomeScreen() {
         {!loading && !error && !contentHtml && (
           <ThemedText>등록된 회사 소개가 없습니다.</ThemedText>
         )}
-        {!loading && !error && contentHtml && <CompanyInfoHtml contentHtml={contentHtml} />}
+        {!loading && !error && contentHtml && <HtmlContent contentHtml={contentHtml} />}
       </ThemedView>
     </ParallaxScrollView>
   );
