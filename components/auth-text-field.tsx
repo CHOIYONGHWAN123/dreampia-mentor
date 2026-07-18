@@ -8,14 +8,14 @@ export function AuthTextField({
   label,
   error,
   ...rest
-}: TextInputProps & { label: string; error?: string }) {
+}: TextInputProps & { label?: string; error?: string }) {
   const color = useThemeColor({}, 'text');
   const borderColor = useThemeColor({ light: '#ccc', dark: '#3a3d3e' }, 'icon');
   const placeholderColor = useThemeColor({}, 'icon');
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText style={styles.label}>{label}</ThemedText>
+      {label && <ThemedText style={styles.label}>{label}</ThemedText>}
       <TextInput
         style={[styles.input, { color, borderColor }]}
         placeholderTextColor={placeholderColor}

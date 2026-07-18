@@ -39,6 +39,7 @@ function RootNavigator() {
       </Stack.Protected>
       <Stack.Protected guard={isPendingMentor}>
         <Stack.Screen name="pending-approval" options={{ headerShown: false }} />
+        <Stack.Screen name="profile-setup" options={{ title: '추가 정보 입력' }} />
       </Stack.Protected>
       <Stack.Protected guard={!session}>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
