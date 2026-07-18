@@ -75,7 +75,7 @@ export default function ProfileSetupScreen() {
       const agreementFileUrl = await uploadFile('agreement-file', selfId, agreementFile);
       const bankAccount = [bankName, bankAccountNumber.trim()].filter(Boolean).join(' ') || null;
 
-      const { error: updateError } = await supabase
+      const { data: updatedRows, error: updateError } = await supabase
         .from('mentors')
         .update({
           address: address.trim() || null,
@@ -86,8 +86,14 @@ export default function ProfileSetupScreen() {
           available_areas: availableAreas.length ? availableAreas : null,
           agreement_file_url: agreementFileUrl,
         })
-        .eq('id', selfId);
+        .eq('id', selfId)
+        .select('id');
       if (updateError) throw new Error(updateError.message);
+      if (!updatedRows || updatedRows.length === 0) {
+        throw new Error(
+          '내 계정의 멘토 프로필을 찾을 수 없습니다. 로그아웃 후 다시 로그인해보시고, 그래도 안 되면 관리자에게 문의해주세요.'
+        );
+      }
 
       // 프로그램 등록 내용은 재입력 시 항상 기존 것을 지우고 새로 채워 넣는다(변경 = 삭제 후 재추가).
       const { error: deleteError } = await supabase
