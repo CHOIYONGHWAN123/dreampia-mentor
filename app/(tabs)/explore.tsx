@@ -1,4 +1,5 @@
-import { StyleSheet } from 'react-native';
+import { Link } from 'expo-router';
+import { StyleSheet, TouchableOpacity } from 'react-native';
 
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
@@ -29,6 +30,13 @@ export default function MyPageScreen() {
         )}
       </ThemedView>
 
+      <Link href="/invitations" asChild>
+        <TouchableOpacity style={styles.menuItem}>
+          <ThemedText type="defaultSemiBold">강의요청</ThemedText>
+          <IconSymbol name="chevron.right" size={18} color="#687076" />
+        </TouchableOpacity>
+      </Link>
+
       <ThemedText type="link" onPress={signOut}>
         로그아웃
       </ThemedText>
@@ -55,5 +63,14 @@ const styles = StyleSheet.create({
   },
   pending: {
     color: '#c77700',
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e2e2',
+    marginBottom: 16,
   },
 });
