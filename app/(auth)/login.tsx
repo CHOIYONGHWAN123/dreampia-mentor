@@ -76,6 +76,12 @@ export default function LoginScreen() {
               <ThemedText type="link">회원가입</ThemedText>
             </Link>
           </ThemedView>
+
+          <ThemedView style={styles.footer}>
+            <Link href="/find-id">
+              <ThemedText type="link">아이디 찾기</ThemedText>
+            </Link>
+          </ThemedView>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

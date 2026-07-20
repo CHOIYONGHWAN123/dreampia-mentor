@@ -902,6 +902,27 @@ export type Database = {
           },
         ]
       }
+      mentor_find_id_attempts: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          phone_digits: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          phone_digits: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          phone_digits?: string
+        }
+        Relationships: []
+      }
       mentor_occupation_programs: {
         Row: {
           id: string
