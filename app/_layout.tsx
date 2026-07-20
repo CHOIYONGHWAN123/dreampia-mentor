@@ -37,6 +37,8 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         <Stack.Screen name="invitations" options={{ title: '강의요청' }} />
+        <Stack.Screen name="lecture-schedule" options={{ title: '강의 일정' }} />
+        <Stack.Screen name="lecture-schedule-detail" options={{ title: '강의 상세' }} />
       </Stack.Protected>
       <Stack.Protected guard={isPendingMentor}>
         <Stack.Screen name="pending-approval" options={{ headerShown: false }} />

@@ -37,6 +37,13 @@ export default function MyPageScreen() {
         </TouchableOpacity>
       </Link>
 
+      <Link href="/lecture-schedule" asChild>
+        <TouchableOpacity style={styles.menuItem}>
+          <ThemedText type="defaultSemiBold">강의 일정</ThemedText>
+          <IconSymbol name="chevron.right" size={18} color="#687076" />
+        </TouchableOpacity>
+      </Link>
+
       <ThemedText type="link" onPress={signOut}>
         로그아웃
       </ThemedText>
