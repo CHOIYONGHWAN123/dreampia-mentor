@@ -151,6 +151,49 @@ export type Database = {
         }
         Relationships: []
       }
+      event_photos: {
+        Row: {
+          created_at: string
+          event_rows_id: string
+          id: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          event_rows_id: string
+          id?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          event_rows_id?: string
+          id?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_photos_event_rows_id_fkey"
+            columns: ["event_rows_id"]
+            isOneToOne: false
+            referencedRelation: "event_rows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_photos_event_rows_id_fkey"
+            columns: ["event_rows_id"]
+            isOneToOne: false
+            referencedRelation: "mentor_event_row_detail"
+            referencedColumns: ["event_row_id"]
+          },
+          {
+            foreignKeyName: "event_photos_event_rows_id_fkey"
+            columns: ["event_rows_id"]
+            isOneToOne: false
+            referencedRelation: "mentor_invitation_requests"
+            referencedColumns: ["event_row_id"]
+          },
+        ]
+      }
       event_rows: {
         Row: {
           attendance: boolean | null
@@ -160,12 +203,14 @@ export type Database = {
           event_id: string | null
           headcount: number | null
           id: string
+          instructor_waiting_room: string | null
           lecture_fee: number | null
           lecture_fee_after_tax: number | null
           lecture_fee_payer_id: string | null
           material_fee_payer_id: string | null
           mentor_id: string | null
           occupation_program_unit_id: string | null
+          preparing: boolean
           remarks: string | null
           school_request_response: string | null
           session_headcount: number | null
@@ -180,12 +225,14 @@ export type Database = {
           event_id?: string | null
           headcount?: number | null
           id?: string
+          instructor_waiting_room?: string | null
           lecture_fee?: number | null
           lecture_fee_after_tax?: number | null
           lecture_fee_payer_id?: string | null
           material_fee_payer_id?: string | null
           mentor_id?: string | null
           occupation_program_unit_id?: string | null
+          preparing?: boolean
           remarks?: string | null
           school_request_response?: string | null
           session_headcount?: number | null
@@ -200,12 +247,14 @@ export type Database = {
           event_id?: string | null
           headcount?: number | null
           id?: string
+          instructor_waiting_room?: string | null
           lecture_fee?: number | null
           lecture_fee_after_tax?: number | null
           lecture_fee_payer_id?: string | null
           material_fee_payer_id?: string | null
           mentor_id?: string | null
           occupation_program_unit_id?: string | null
+          preparing?: boolean
           remarks?: string | null
           school_request_response?: string | null
           session_headcount?: number | null
@@ -219,6 +268,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_rows_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mentor_event_row_detail"
+            referencedColumns: ["event_id"]
           },
           {
             foreignKeyName: "event_rows_event_id_fkey"
@@ -247,6 +303,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "mentors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_rows_occupation_program_unit_id_fkey"
+            columns: ["occupation_program_unit_id"]
+            isOneToOne: false
+            referencedRelation: "mentor_event_row_detail"
+            referencedColumns: ["unit_id"]
           },
           {
             foreignKeyName: "event_rows_occupation_program_unit_id_fkey"
@@ -301,6 +364,13 @@ export type Database = {
             foreignKeyName: "event_schedules_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "mentor_event_row_detail"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_schedules_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "mentor_invitation_requests"
             referencedColumns: ["event_id"]
           },
@@ -335,6 +405,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_sessions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mentor_event_row_detail"
+            referencedColumns: ["event_id"]
           },
           {
             foreignKeyName: "event_sessions_event_id_fkey"
@@ -714,6 +791,13 @@ export type Database = {
             foreignKeyName: "invitation_event_rows_event_row_id_fkey"
             columns: ["event_row_id"]
             isOneToOne: false
+            referencedRelation: "mentor_event_row_detail"
+            referencedColumns: ["event_row_id"]
+          },
+          {
+            foreignKeyName: "invitation_event_rows_event_row_id_fkey"
+            columns: ["event_row_id"]
+            isOneToOne: false
             referencedRelation: "mentor_invitation_requests"
             referencedColumns: ["event_row_id"]
           },
@@ -808,6 +892,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "event_rows"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invitation_row_responses_event_row_id_fkey"
+            columns: ["event_row_id"]
+            isOneToOne: false
+            referencedRelation: "mentor_event_row_detail"
+            referencedColumns: ["event_row_id"]
           },
           {
             foreignKeyName: "invitation_row_responses_event_row_id_fkey"
@@ -972,6 +1063,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "mentors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mentor_occupation_programs_occupation_program_unit_id_fkey"
+            columns: ["occupation_program_unit_id"]
+            isOneToOne: false
+            referencedRelation: "mentor_event_row_detail"
+            referencedColumns: ["unit_id"]
           },
           {
             foreignKeyName: "mentor_occupation_programs_occupation_program_unit_id_fkey"
@@ -1233,6 +1331,13 @@ export type Database = {
             foreignKeyName: "supplies_occupation_program_unit_id_fkey"
             columns: ["occupation_program_unit_id"]
             isOneToOne: true
+            referencedRelation: "mentor_event_row_detail"
+            referencedColumns: ["unit_id"]
+          },
+          {
+            foreignKeyName: "supplies_occupation_program_unit_id_fkey"
+            columns: ["occupation_program_unit_id"]
+            isOneToOne: true
             referencedRelation: "mentor_invitation_requests"
             referencedColumns: ["unit_id"]
           },
@@ -1295,6 +1400,13 @@ export type Database = {
             foreignKeyName: "supply_logs_event_row_id_fkey"
             columns: ["event_row_id"]
             isOneToOne: false
+            referencedRelation: "mentor_event_row_detail"
+            referencedColumns: ["event_row_id"]
+          },
+          {
+            foreignKeyName: "supply_logs_event_row_id_fkey"
+            columns: ["event_row_id"]
+            isOneToOne: false
             referencedRelation: "mentor_invitation_requests"
             referencedColumns: ["event_row_id"]
           },
@@ -1330,6 +1442,69 @@ export type Database = {
       }
     }
     Views: {
+      mentor_event_row_detail: {
+        Row: {
+          attendance: boolean | null
+          campaign_name: string | null
+          classroom: string | null
+          criminal_background_check: string | null
+          dreampia_material_cost: number | null
+          end_time: string | null
+          event_id: string | null
+          event_name: string | null
+          event_row_id: string | null
+          headcount: number | null
+          indoor_shoes_note: string | null
+          institution_address: string | null
+          institution_name: string | null
+          instructor_waiting_room: string | null
+          laptop_wifi_note: string | null
+          lecture_fee: number | null
+          lecture_fee_after_tax: number | null
+          lecture_fee_payer_id: string | null
+          material_fee_payer_id: string | null
+          memo: string | null
+          mentor_id: string | null
+          mentor_material_cost: number | null
+          mentor_name: string | null
+          mentor_phone: string | null
+          notice: string | null
+          occupation_name: string | null
+          parking_note: string | null
+          prep_by: Database["public"]["Enums"]["prep_by"] | null
+          preparing: boolean | null
+          program_name: string | null
+          session_headcount: number | null
+          start_time: string | null
+          student_rotation: string | null
+          target: string | null
+          unit_id: string | null
+          unit_title: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_rows_lecture_fee_payer_id_fkey"
+            columns: ["lecture_fee_payer_id"]
+            isOneToOne: false
+            referencedRelation: "mentors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_rows_mentor_id_fkey"
+            columns: ["mentor_id"]
+            isOneToOne: false
+            referencedRelation: "mentors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mentor_occupation_programs_material_fee_payer_id_fkey"
+            columns: ["material_fee_payer_id"]
+            isOneToOne: false
+            referencedRelation: "mentors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mentor_invitation_requests: {
         Row: {
           assigned_mentor_id: string | null
@@ -1389,6 +1564,10 @@ export type Database = {
       }
       accept_invitation_event_row: {
         Args: { p_event_row_id: string; p_invitation_mentor_id: string }
+        Returns: undefined
+      }
+      cancel_event_row_assignment: {
+        Args: { p_event_row_id: string }
         Returns: undefined
       }
       decline_invitation: {
