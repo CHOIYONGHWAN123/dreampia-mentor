@@ -36,16 +36,16 @@ function formatDate(iso: string | null) {
   return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일(${WEEKDAY_LABELS[d.getDay()]})`;
 }
 
-// prep_by가 '강사'일 때만 강사가 재료비를 실제로 부담/정산받는다. '드림피아'는 드림피아가 부담하고,
-// '모두가능'은 실제 준비 주체를 기록하는 컬럼이 아직 DB에 없어 확정 금액을 알 수 없으므로 0으로 둔다.
-function materialCostOf(row: DetailRow) {
-  if (row.prep_by === '강사') return row.mentor_material_cost ?? 0;
-  return 0;
+// material_fee_payer_id(재료비 입금자)가 본인이면 재료비를 정산받는다. prep_by(누가 준비하는지)와는
+// 별개 개념이라, 실제 정산 대상 판단은 반드시 material_fee_payer_id로 한다.
+function materialCostOf(row: DetailRow, mentorId?: string) {
+  if (!mentorId || row.material_fee_payer_id !== mentorId) return 0;
+  return row.mentor_material_cost ?? 0;
 }
 
 // 합계는 실제 입금액 기준(세후 강의료 + 재료비)으로 계산한다.
-function totalOf(row: DetailRow) {
-  return (row.lecture_fee_after_tax ?? 0) + materialCostOf(row);
+function totalOf(row: DetailRow, mentorId?: string) {
+  return (row.lecture_fee_after_tax ?? 0) + materialCostOf(row, mentorId);
 }
 
 export default function LectureSettlementScreen() {
@@ -99,7 +99,10 @@ export default function LectureSettlementScreen() {
     load();
   };
 
-  const periodTotal = useMemo(() => rows.reduce((sum, r) => sum + totalOf(r), 0), [rows]);
+  const periodTotal = useMemo(
+    () => rows.reduce((sum, r) => sum + totalOf(r, mentorId), 0),
+    [rows, mentorId]
+  );
   const visibleRows = rows.slice(0, visibleCount);
 
   const stepMonth = (which: 'from' | 'to', direction: -1 | 1) => {
@@ -164,7 +167,7 @@ export default function LectureSettlementScreen() {
         )}
 
         {visibleRows.map((row, index) => (
-          <SettlementCard key={row.event_row_id ?? index} no={index + 1} row={row} />
+          <SettlementCard key={row.event_row_id ?? index} no={index + 1} row={row} mentorId={mentorId} />
         ))}
 
         {visibleCount < rows.length && (
@@ -208,9 +211,9 @@ function PeriodRow({
   );
 }
 
-function SettlementCard({ no, row }: { no: number; row: DetailRow }) {
-  const materialCost = materialCostOf(row);
-  const total = totalOf(row);
+function SettlementCard({ no, row, mentorId }: { no: number; row: DetailRow; mentorId?: string }) {
+  const materialCost = materialCostOf(row, mentorId);
+  const total = totalOf(row, mentorId);
   return (
     <ThemedView style={styles.card}>
       <View style={styles.cardHeader}>
