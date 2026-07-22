@@ -15,7 +15,7 @@ export const unstable_settings = {
 };
 
 function RootNavigator() {
-  const { session, isLoading, mentor, isMentorLoading } = useAuth();
+  const { session, isLoading, mentor, isMentorLoading, isPasswordRecovery } = useAuth();
   const isReady = !isLoading && (!session || !isMentorLoading);
 
   useEffect(() => {
@@ -28,11 +28,14 @@ function RootNavigator() {
     return null;
   }
 
-  const isApprovedMentor = !!session && mentor?.is_authenticated === true;
-  const isPendingMentor = !!session && !isApprovedMentor;
+  const isApprovedMentor = !!session && !isPasswordRecovery && mentor?.is_authenticated === true;
+  const isPendingMentor = !!session && !isPasswordRecovery && !isApprovedMentor;
 
   return (
     <Stack>
+      <Stack.Protected guard={!!session && isPasswordRecovery}>
+        <Stack.Screen name="reset-password" options={{ headerShown: false }} />
+      </Stack.Protected>
       <Stack.Protected guard={isApprovedMentor}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />

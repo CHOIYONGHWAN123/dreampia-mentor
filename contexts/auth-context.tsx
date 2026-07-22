@@ -15,6 +15,7 @@ type AuthContextValue = {
   mentor: MentorProfile | null;
   isLoading: boolean;
   isMentorLoading: boolean;
+  isPasswordRecovery: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (params: {
     email: string;
@@ -33,6 +34,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [mentor, setMentor] = useState<MentorProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMentorLoading, setIsMentorLoading] = useState(false);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -40,7 +42,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setIsLoading(false);
     });
 
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    // find-password 화면에서 verifyOtp(type: 'recovery')로 인증에 성공하면 세션이 생기면서
+    // 'PASSWORD_RECOVERY' 이벤트가 발생한다. 이때는 일반 로그인으로 취급해 (tabs)로 보내지 않고
+    // reset-password 화면에서 새 비밀번호를 설정하게 해야 한다.
+    const { data: subscription } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (event === 'PASSWORD_RECOVERY') setIsPasswordRecovery(true);
+      if (event === 'SIGNED_OUT') setIsPasswordRecovery(false);
       setSession(nextSession);
     });
 
@@ -108,7 +115,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   return (
     <AuthContext.Provider
-      value={{ session, mentor, isLoading, isMentorLoading, signIn, signUp, signOut }}>
+      value={{
+        session,
+        mentor,
+        isLoading,
+        isMentorLoading,
+        isPasswordRecovery,
+        signIn,
+        signUp,
+        signOut,
+      }}>
       {children}
     </AuthContext.Provider>
   );
