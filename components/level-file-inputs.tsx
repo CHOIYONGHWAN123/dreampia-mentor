@@ -10,12 +10,16 @@ export function LevelFileInputs({
   levels,
   pptFiles = {},
   profileFiles = {},
+  existingPptFileUrls = {},
+  existingProfileFileUrls = {},
   onPptChange,
   onProfileChange,
 }: {
   levels: { schoolLevel: string }[];
   pptFiles?: Record<string, PickedFile | null>;
   profileFiles?: Record<string, PickedFile | null>;
+  existingPptFileUrls?: Record<string, string | null>;
+  existingProfileFileUrls?: Record<string, string | null>;
   onPptChange: (schoolLevel: string, file: PickedFile | null) => void;
   onProfileChange: (schoolLevel: string, file: PickedFile | null) => void;
 }) {
@@ -31,6 +35,7 @@ export function LevelFileInputs({
               <ThemedText style={styles.fileLabel}>PPT</ThemedText>
               <FilePicker
                 file={pptFiles[l.schoolLevel] ?? null}
+                existingFileUrl={existingPptFileUrls[l.schoolLevel] ?? null}
                 onChange={(file) => onPptChange(l.schoolLevel, file)}
                 mimeTypes={[
                   'application/vnd.ms-powerpoint',
@@ -45,6 +50,7 @@ export function LevelFileInputs({
               <ThemedText style={styles.fileLabel}>프로필</ThemedText>
               <FilePicker
                 file={profileFiles[l.schoolLevel] ?? null}
+                existingFileUrl={existingProfileFileUrls[l.schoolLevel] ?? null}
                 onChange={(file) => onProfileChange(l.schoolLevel, file)}
                 mimeTypes={['application/pdf', 'application/msword', '*/*']}
                 templateAsset={require('@/assets/templates/profile-template.hwpx')}

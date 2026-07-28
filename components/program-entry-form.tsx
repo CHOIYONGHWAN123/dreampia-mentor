@@ -55,13 +55,24 @@ export function ProgramEntryForm({
         programCategories={programCategories}
         excludedUnitIds={excludedUnitIds}
         value={entry.selection}
-        onChange={(selection) => onChange({ ...entry, selection, pptFiles: {}, profileFiles: {} })}
+        onChange={(selection) =>
+          onChange({
+            ...entry,
+            selection,
+            pptFiles: {},
+            profileFiles: {},
+            existingPptFileUrls: {},
+            existingProfileFileUrls: {},
+          })
+        }
       />
 
       <LevelFileInputs
         levels={entry.selection.levels}
         pptFiles={entry.pptFiles}
         profileFiles={entry.profileFiles}
+        existingPptFileUrls={entry.existingPptFileUrls}
+        existingProfileFileUrls={entry.existingProfileFileUrls}
         onPptChange={(level, file) => onChange({ ...entry, pptFiles: { ...entry.pptFiles, [level]: file } })}
         onProfileChange={(level, file) =>
           onChange({ ...entry, profileFiles: { ...entry.profileFiles, [level]: file } })

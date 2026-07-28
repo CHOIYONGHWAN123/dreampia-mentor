@@ -43,6 +43,7 @@ function RootNavigator() {
         <Stack.Screen name="lecture-schedule" options={{ title: '강의 일정' }} />
         <Stack.Screen name="lecture-schedule-detail" options={{ title: '강의 상세' }} />
         <Stack.Screen name="lecture-settlement" options={{ title: '강의 정산' }} />
+        <Stack.Screen name="profile-edit" options={{ title: '회원정보 수정' }} />
       </Stack.Protected>
       <Stack.Protected guard={isPendingMentor}>
         <Stack.Screen name="pending-approval" options={{ headerShown: false }} />

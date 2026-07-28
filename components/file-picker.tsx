@@ -1,5 +1,5 @@
 import * as DocumentPicker from 'expo-document-picker';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import { Linking, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -8,12 +8,15 @@ import type { PickedFile } from '@/lib/upload-file';
 
 export function FilePicker({
   file,
+  existingFileUrl = null,
   onChange,
   mimeTypes = ['*/*'],
   templateAsset,
   templateFilename,
 }: {
   file: PickedFile | null;
+  // 회원정보 수정 화면처럼 이미 업로드된 파일이 있을 때, 새로 고르지 않으면 이 파일을 유지한다는 표시용.
+  existingFileUrl?: string | null;
   onChange: (file: PickedFile | null) => void;
   mimeTypes?: string[];
   templateAsset?: number;
@@ -46,6 +49,15 @@ export function FilePicker({
             </ThemedText>
             <TouchableOpacity onPress={() => onChange(null)} hitSlop={8}>
               <ThemedText style={styles.remove}>제거</ThemedText>
+            </TouchableOpacity>
+          </>
+        ) : existingFileUrl ? (
+          <>
+            <ThemedText style={styles.existingText} numberOfLines={1}>
+              📎 기존 파일 등록됨 (탭하여 교체)
+            </ThemedText>
+            <TouchableOpacity onPress={() => Linking.openURL(existingFileUrl)} hitSlop={8}>
+              <ThemedText style={styles.viewLink}>보기</ThemedText>
             </TouchableOpacity>
           </>
         ) : (
@@ -87,5 +99,15 @@ const styles = StyleSheet.create({
   remove: {
     fontSize: 12,
     color: '#d32f2f',
+  },
+  existingText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#0a7ea4',
+  },
+  viewLink: {
+    fontSize: 12,
+    color: '#0a7ea4',
+    fontWeight: '600',
   },
 });
