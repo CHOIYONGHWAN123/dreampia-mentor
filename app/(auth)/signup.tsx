@@ -12,10 +12,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AuthTextField } from '@/components/auth-text-field';
 import { HtmlContent } from '@/components/html-content';
+import {
+  IdentityVerificationModal,
+  type IdentityVerificationResult,
+} from '@/components/identity-verification-modal';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/contexts/auth-context';
 import { supabase } from '@/lib/supabase';
+
+type VerifiedIdentity = { name: string; phone: string; ci: string | null };
 
 type Terms = {
   id: string;
@@ -38,8 +44,8 @@ export default function SignupScreen() {
   const { signUp } = useAuth();
   const router = useRouter();
 
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
+  const [verified, setVerified] = useState<VerifiedIdentity | null>(null);
+  const [verifyModalVisible, setVerifyModalVisible] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
@@ -61,8 +67,21 @@ export default function SignupScreen() {
       .then(({ data }) => setTerms(data));
   }, []);
 
+  const handleVerifyResult = (result: IdentityVerificationResult) => {
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    setError(null);
+    setVerified({ name: result.name, phone: result.phone, ci: result.ci });
+  };
+
   const handleSubmit = async () => {
-    if (!name.trim() || !phone.trim() || !email.trim() || !password) {
+    if (!verified) {
+      setError('본인인증을 진행해주세요.');
+      return;
+    }
+    if (!email.trim() || !password) {
       setError('모든 항목을 입력해주세요.');
       return;
     }
@@ -89,9 +108,10 @@ export default function SignupScreen() {
       await signUp({
         email: email.trim(),
         password,
-        name: name.trim(),
-        phone: phone.trim(),
+        name: verified.name,
+        phone: verified.phone,
         termsVersionId: terms.id,
+        identityVerificationCi: verified.ci,
       });
       router.replace('/');
     } catch (e) {
@@ -112,14 +132,24 @@ export default function SignupScreen() {
           </ThemedText>
 
           <ThemedView style={styles.form}>
-            <AuthTextField label="이름" value={name} onChangeText={setName} placeholder="홍길동" />
-            <AuthTextField
-              label="연락처"
-              value={phone}
-              onChangeText={setPhone}
-              placeholder="010-0000-0000"
-              keyboardType="phone-pad"
-            />
+            <ThemedView style={styles.field}>
+              <ThemedText style={styles.label}>본인인증</ThemedText>
+              {verified ? (
+                <ThemedView style={styles.verifiedBox}>
+                  <ThemedView>
+                    <ThemedText type="defaultSemiBold">{verified.name}</ThemedText>
+                    <ThemedText style={styles.verifiedPhone}>{verified.phone}</ThemedText>
+                  </ThemedView>
+                  <TouchableOpacity onPress={() => setVerifyModalVisible(true)}>
+                    <ThemedText type="link">다시 인증하기</ThemedText>
+                  </TouchableOpacity>
+                </ThemedView>
+              ) : (
+                <TouchableOpacity style={styles.verifyButton} onPress={() => setVerifyModalVisible(true)}>
+                  <ThemedText style={styles.verifyButtonText}>본인인증하기</ThemedText>
+                </TouchableOpacity>
+              )}
+            </ThemedView>
             <AuthTextField
               label="이메일"
               value={email}
@@ -204,6 +234,12 @@ export default function SignupScreen() {
           </ScrollView>
         </SafeAreaView>
       </Modal>
+
+      <IdentityVerificationModal
+        visible={verifyModalVisible}
+        onClose={() => setVerifyModalVisible(false)}
+        onResult={handleVerifyResult}
+      />
     </SafeAreaView>
   );
 }
@@ -226,6 +262,39 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: 16,
+  },
+  field: {
+    gap: 6,
+  },
+  label: {
+    fontSize: 13,
+    opacity: 0.7,
+  },
+  verifyButton: {
+    borderWidth: 1,
+    borderColor: '#0a7ea4',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  verifyButtonText: {
+    color: '#0a7ea4',
+    fontWeight: '600',
+  },
+  verifiedBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  verifiedPhone: {
+    fontSize: 13,
+    opacity: 0.7,
+    marginTop: 2,
   },
   termsContainer: {
     gap: 8,

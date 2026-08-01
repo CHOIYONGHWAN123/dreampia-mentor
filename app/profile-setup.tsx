@@ -15,7 +15,7 @@ import { AuthTextField } from '@/components/auth-text-field';
 import { DaumAddressSearch } from '@/components/daum-address-search';
 import { FieldSectionForm } from '@/components/field-section-form';
 import { FilePicker } from '@/components/file-picker';
-import { MentorSearchSelect } from '@/components/mentor-search-select';
+import { MentorCodeSearch } from '@/components/mentor-code-search';
 import { SelectField } from '@/components/select-field';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -222,14 +222,13 @@ export default function ProfileSetupScreen() {
 
           <ThemedView style={styles.field}>
             <ThemedText style={styles.label}>소속 강사 (선택)</ThemedText>
-            <MentorSearchSelect
+            <MentorCodeSearch
               value={belongsToId}
               displayName={belongsToName}
               onChange={(id, name) => {
                 setBelongsToId(id);
                 setBelongsToName(name);
               }}
-              placeholder="소속 강사 검색"
             />
           </ThemedView>
 

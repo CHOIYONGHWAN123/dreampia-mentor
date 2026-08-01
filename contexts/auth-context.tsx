@@ -8,6 +8,7 @@ export type MentorProfile = {
   name: string;
   phone: string | null;
   is_authenticated: boolean;
+  mentor_unique_code: string;
 };
 
 type AuthContextValue = {
@@ -23,6 +24,7 @@ type AuthContextValue = {
     name: string;
     phone: string;
     termsVersionId: string;
+    identityVerificationCi: string | null;
   }) => Promise<void>;
   signOut: () => Promise<void>;
 };
@@ -65,7 +67,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setIsMentorLoading(true);
     supabase
       .from('mentors')
-      .select('id, name, phone, is_authenticated')
+      .select('id, name, phone, is_authenticated, mentor_unique_code')
       .eq('id', session.user.id)
       .maybeSingle()
       .then(({ data }) => {
@@ -91,18 +93,26 @@ export function AuthProvider({ children }: PropsWithChildren) {
     name,
     phone,
     termsVersionId,
+    identityVerificationCi,
   }: {
     email: string;
     password: string;
     name: string;
     phone: string;
     termsVersionId: string;
+    identityVerificationCi: string | null;
   }) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { name, phone, terms_version_id: termsVersionId, account_type: 'mentor' },
+        data: {
+          name,
+          phone,
+          terms_version_id: termsVersionId,
+          account_type: 'mentor',
+          identity_verification_ci: identityVerificationCi,
+        },
       },
     });
     if (error) throw error;

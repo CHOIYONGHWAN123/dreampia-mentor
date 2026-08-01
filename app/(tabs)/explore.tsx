@@ -21,7 +21,14 @@ export default function MyPageScreen() {
       </ThemedView>
 
       <ThemedView style={styles.infoContainer}>
-        <ThemedText type="defaultSemiBold">{mentor?.name ?? '멘토'}</ThemedText>
+        <ThemedView style={styles.nameRow}>
+          <ThemedText type="defaultSemiBold">{mentor?.name ?? '멘토'}</ThemedText>
+          {mentor?.mentor_unique_code && (
+            <ThemedView style={styles.codeBadge}>
+              <ThemedText style={styles.codeText}>{mentor.mentor_unique_code}</ThemedText>
+            </ThemedView>
+          )}
+        </ThemedView>
         <ThemedText>{session?.user.email}</ThemedText>
         {mentor && (
           <ThemedText style={mentor.is_authenticated ? styles.approved : styles.pending}>
@@ -78,6 +85,23 @@ const styles = StyleSheet.create({
   infoContainer: {
     gap: 4,
     marginBottom: 16,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  codeBadge: {
+    backgroundColor: '#e3f2fd',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  codeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#0a7ea4',
+    letterSpacing: 1,
   },
   approved: {
     color: '#2e7d32',

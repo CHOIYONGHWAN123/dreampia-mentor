@@ -1090,8 +1090,11 @@ export type Database = {
           detail_address: string | null
           id: string
           id_number: string | null
+          identity_verification_ci: string | null
+          identity_verified_at: string | null
           is_authenticated: boolean
           is_available: boolean
+          mentor_unique_code: string
           name: string
           phone: string | null
           score: number | null
@@ -1110,8 +1113,11 @@ export type Database = {
           detail_address?: string | null
           id?: string
           id_number?: string | null
+          identity_verification_ci?: string | null
+          identity_verified_at?: string | null
           is_authenticated?: boolean
           is_available?: boolean
+          mentor_unique_code: string
           name: string
           phone?: string | null
           score?: number | null
@@ -1130,8 +1136,11 @@ export type Database = {
           detail_address?: string | null
           id?: string
           id_number?: string | null
+          identity_verification_ci?: string | null
+          identity_verified_at?: string | null
           is_authenticated?: boolean
           is_available?: boolean
+          mentor_unique_code?: string
           name?: string
           phone?: string | null
           score?: number | null
@@ -1565,6 +1574,14 @@ export type Database = {
         Returns: undefined
       }
       expire_stale_invitations: { Args: never; Returns: undefined }
+      find_mentor_by_unique_code: {
+        Args: { p_code: string }
+        Returns: {
+          id: string
+          name: string
+        }[]
+      }
+      generate_mentor_unique_code: { Args: never; Returns: string }
       get_mentor_names: {
         Args: { ids: string[] }
         Returns: {
