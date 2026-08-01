@@ -1,13 +1,6 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FilePicker } from '@/components/file-picker';
@@ -57,7 +50,6 @@ function materialCostText(detail: DetailRow) {
 }
 
 export default function LectureScheduleDetailScreen() {
-  const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [detail, setDetail] = useState<DetailRow | null>(null);
@@ -68,7 +60,6 @@ export default function LectureScheduleDetailScreen() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [uploadingCriminal, setUploadingCriminal] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const [cancelling, setCancelling] = useState(false);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -180,26 +171,6 @@ export default function LectureScheduleDetailScreen() {
       return;
     }
     setPhotos((prev) => prev.filter((p) => p.id !== photoId));
-  };
-
-  const confirmCancel = () => {
-    Alert.alert('강의를 취소하시겠습니까?', '취소하면 되돌릴 수 없고, 나의 강의 일정에서 삭제됩니다.', [
-      { text: '아니오', style: 'cancel' },
-      { text: '취소하기', style: 'destructive', onPress: doCancel },
-    ]);
-  };
-
-  const doCancel = async () => {
-    if (!id) return;
-    setActionError(null);
-    setCancelling(true);
-    const { error } = await supabase.rpc('cancel_event_row_assignment', { p_event_row_id: id });
-    setCancelling(false);
-    if (error) {
-      setActionError(error.message);
-      return;
-    }
-    router.back();
   };
 
   if (loading) {
@@ -315,17 +286,6 @@ export default function LectureScheduleDetailScreen() {
             {uploadingPhoto && <ActivityIndicator />}
           </View>
         </ThemedView>
-
-        <TouchableOpacity
-          style={[styles.cancelButton, cancelling && styles.buttonDisabled]}
-          disabled={cancelling}
-          onPress={confirmCancel}>
-          {cancelling ? (
-            <ActivityIndicator color="#c0392b" />
-          ) : (
-            <ThemedText style={styles.cancelButtonText}>강의 취소</ThemedText>
-          )}
-        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -473,19 +433,5 @@ const styles = StyleSheet.create({
   removeText: {
     fontSize: 12,
     color: '#d32f2f',
-  },
-  cancelButton: {
-    borderWidth: 1,
-    borderColor: '#c0392b',
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  cancelButtonText: {
-    color: '#c0392b',
-    fontWeight: '600',
   },
 });
