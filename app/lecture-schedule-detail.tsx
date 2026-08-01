@@ -228,12 +228,12 @@ export default function LectureScheduleDetailScreen() {
         {actionError && <ThemedText style={styles.errorText}>{actionError}</ThemedText>}
 
         <ThemedView style={styles.card}>
-          <Field label="행사 구분" value={detail.campaign_name ?? '-'} />
           <Field label="학교/기관명" value={detail.institution_name ?? '-'} />
           <Field label="주소" value={detail.institution_address ?? '-'} />
           <Field label="노트북/Wi-Fi" value={detail.laptop_wifi_note ?? '-'} />
           <Field label="실내화 위치" value={detail.indoor_shoes_note ?? '-'} />
           <Field label="주차/엘리베이터" value={detail.parking_note ?? '-'} />
+          <Field label="기관아이디/검증번호" value={detail.crime_check_info ?? '-'} />
           <Field label="학생변경 여부" value={detail.student_rotation ?? '-'} />
           <Field label="공지사항" value={detail.notice ?? '-'} />
           <Field label="메모" value={detail.memo ?? '-'} />

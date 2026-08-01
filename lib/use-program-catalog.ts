@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import type { ProgramCategoryOption, UnitOption } from '@/components/program-unit-picker';
+import type { UnitOption } from '@/components/program-unit-picker';
 import { supabase } from '@/lib/supabase';
 
 export type ProgramCatalog = {
@@ -8,7 +8,6 @@ export type ProgramCatalog = {
   occupations: { id: string; name: string; field_id: string | null }[];
   programs: { id: string; name: string; occupation_id: string | null }[];
   units: UnitOption[];
-  programCategories: ProgramCategoryOption[];
 };
 
 const EMPTY_CATALOG: ProgramCatalog = {
@@ -16,7 +15,6 @@ const EMPTY_CATALOG: ProgramCatalog = {
   occupations: [],
   programs: [],
   units: [],
-  programCategories: [],
 };
 
 export function useProgramCatalog() {
@@ -32,17 +30,15 @@ export function useProgramCatalog() {
       supabase.from('occupation_programs').select('id, name, occupation_id').order('name'),
       supabase
         .from('occupation_program_unit')
-        .select('id, title, occupation_programs_id, program_category_id')
+        .select('id, title, occupation_programs_id, school_level')
         .order('title'),
-      supabase.from('program_categories').select('id, school_level, experience_type').order('sort_order'),
-    ]).then(([fieldsRes, occsRes, progsRes, unitsRes, categoriesRes]) => {
+    ]).then(([fieldsRes, occsRes, progsRes, unitsRes]) => {
       if (isCancelled) return;
       setCatalog({
         fields: fieldsRes.data ?? [],
         occupations: occsRes.data ?? [],
         programs: progsRes.data ?? [],
         units: unitsRes.data ?? [],
-        programCategories: categoriesRes.data ?? [],
       });
       setLoading(false);
     });

@@ -73,7 +73,6 @@ export default function ProfileSetupScreen() {
     setSubmitting(true);
     try {
       const agreementFileUrl = await uploadFile('agreement-file', selfId, agreementFile);
-      const bankAccount = [bankName, bankAccountNumber.trim()].filter(Boolean).join(' ') || null;
 
       const { data: updatedRows, error: updateError } = await supabase
         .from('mentors')
@@ -81,7 +80,8 @@ export default function ProfileSetupScreen() {
           address: address.trim() || null,
           detail_address: detailAddress.trim() || null,
           id_number: idNumber.trim() || null,
-          bank_account: bankAccount,
+          bank: bankName || null,
+          bank_account: bankAccountNumber.trim() || null,
           belongs_to: belongsToId || null,
           available_areas: availableAreas.length ? availableAreas : null,
           agreement_file_url: agreementFileUrl,
@@ -270,7 +270,6 @@ export default function ProfileSetupScreen() {
                     occupations={catalog.occupations}
                     programs={catalog.programs}
                     units={catalog.units}
-                    programCategories={catalog.programCategories}
                     globalExcludedUnitIds={globalExcludedUnitIds}
                     selfId={selfId}
                     onChange={updateSection}

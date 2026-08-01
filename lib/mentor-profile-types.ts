@@ -70,7 +70,6 @@ export function buildFieldSectionsFromExisting(
   payerNames: Record<string, string>
 ): FieldSectionState[] {
   const unitById = new Map(catalog.units.map((u) => [u.id, u]));
-  const categoryById = new Map(catalog.programCategories.map((c) => [c.id, c]));
   const programById = new Map(catalog.programs.map((p) => [p.id, p]));
   const occupationById = new Map(catalog.occupations.map((o) => [o.id, o]));
 
@@ -86,9 +85,7 @@ export function buildFieldSectionsFromExisting(
     if (!program || !program.occupation_id) continue;
     const occupation = occupationById.get(program.occupation_id);
     if (!occupation) continue;
-    const schoolLevel = unit.program_category_id
-      ? (categoryById.get(unit.program_category_id)?.school_level ?? null)
-      : null;
+    const schoolLevel = unit.school_level;
     if (!schoolLevel) continue;
 
     let section = sectionsByOccupation.get(occupation.id);

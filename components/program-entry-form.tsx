@@ -2,12 +2,7 @@ import { StyleSheet, TouchableOpacity } from 'react-native';
 
 import { LevelFileInputs } from '@/components/level-file-inputs';
 import { MentorSearchSelect } from '@/components/mentor-search-select';
-import {
-  ProgramUnitPicker,
-  type ProgramCategoryOption,
-  type ProgramOption,
-  type UnitOption,
-} from '@/components/program-unit-picker';
+import { ProgramUnitPicker, type ProgramOption, type UnitOption } from '@/components/program-unit-picker';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import type { ProgramEntryState } from '@/lib/mentor-profile-types';
@@ -17,7 +12,6 @@ export function ProgramEntryForm({
   entry,
   programs,
   units,
-  programCategories,
   excludedUnitIds,
   selfId,
   onChange,
@@ -26,7 +20,6 @@ export function ProgramEntryForm({
   entry: ProgramEntryState;
   programs: ProgramOption[];
   units: UnitOption[];
-  programCategories: ProgramCategoryOption[];
   excludedUnitIds: Set<string>;
   selfId: string;
   onChange: (next: ProgramEntryState) => void;
@@ -52,7 +45,6 @@ export function ProgramEntryForm({
       <ProgramUnitPicker
         programs={programs}
         units={units}
-        programCategories={programCategories}
         excludedUnitIds={excludedUnitIds}
         value={entry.selection}
         onChange={(selection) =>

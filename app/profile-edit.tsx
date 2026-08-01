@@ -92,11 +92,8 @@ export default function ProfileEditScreen() {
     setExistingAgreementFileUrl(mentor.agreement_file_url ?? null);
     setBelongsToId(mentor.belongs_to ?? '');
 
-    // bank_account는 "은행명 계좌번호" 형태의 한 문자열로 저장돼 있어, 등록된 은행명 접두어로 분리한다.
-    const bankAccountRaw = mentor.bank_account ?? '';
-    const matchedBank = BANK_OPTIONS.find((b) => bankAccountRaw.startsWith(b));
-    setBankName(matchedBank ?? '');
-    setBankAccountNumber(matchedBank ? bankAccountRaw.slice(matchedBank.length).trim() : bankAccountRaw);
+    setBankName(mentor.bank ?? '');
+    setBankAccountNumber(mentor.bank_account ?? '');
 
     const mopRows = mopRes.data ?? [];
     setExistingProgramRows(mopRows);
@@ -180,7 +177,6 @@ export default function ProfileEditScreen() {
       const agreementFileUrl = agreementFile
         ? await uploadFile('agreement-file', selfId, agreementFile)
         : existingAgreementFileUrl;
-      const bankAccount = [bankName, bankAccountNumber.trim()].filter(Boolean).join(' ') || null;
 
       const { error: updateError } = await supabase
         .from('mentors')
@@ -190,7 +186,8 @@ export default function ProfileEditScreen() {
           address: address.trim() || null,
           detail_address: detailAddress.trim() || null,
           id_number: idNumber.trim() || null,
-          bank_account: bankAccount,
+          bank: bankName || null,
+          bank_account: bankAccountNumber.trim() || null,
           belongs_to: belongsToId || null,
           available_areas: availableAreas.length ? availableAreas : null,
           agreement_file_url: agreementFileUrl,
@@ -391,7 +388,6 @@ export default function ProfileEditScreen() {
                 occupations={catalog.occupations}
                 programs={catalog.programs}
                 units={catalog.units}
-                programCategories={catalog.programCategories}
                 globalExcludedUnitIds={globalExcludedUnitIds}
                 selfId={selfId}
                 onChange={updateSection}

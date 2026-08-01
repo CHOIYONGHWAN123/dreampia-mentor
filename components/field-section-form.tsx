@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ProgramEntryForm } from '@/components/program-entry-form';
-import type { ProgramCategoryOption, UnitOption } from '@/components/program-unit-picker';
+import type { UnitOption } from '@/components/program-unit-picker';
 import { SelectField } from '@/components/select-field';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -16,7 +16,6 @@ export function FieldSectionForm({
   occupations,
   programs,
   units,
-  programCategories,
   globalExcludedUnitIds,
   selfId,
   onChange,
@@ -27,7 +26,6 @@ export function FieldSectionForm({
   occupations: { id: string; name: string; field_id: string | null }[];
   programs: { id: string; name: string; occupation_id: string | null }[];
   units: UnitOption[];
-  programCategories: ProgramCategoryOption[];
   globalExcludedUnitIds: Set<string>;
   selfId: string;
   onChange: (next: FieldSectionState) => void;
@@ -95,7 +93,6 @@ export function FieldSectionForm({
               entry={entry}
               programs={filteredPrograms}
               units={units}
-              programCategories={programCategories}
               excludedUnitIds={globalExcludedUnitIds}
               selfId={selfId}
               onChange={(next) =>
