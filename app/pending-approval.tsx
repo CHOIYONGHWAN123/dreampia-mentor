@@ -17,10 +17,8 @@ export default function PendingApprovalScreen() {
         </ThemedText>
         <ThemedText style={styles.description}>
           {mentor?.name ?? '멘토'}님의 가입 신청이 접수되었습니다.{'\n'}
-          관리자 승인 후 서비스를 이용하실 수 있습니다.
-        </ThemedText>
-        <ThemedText style={styles.description}>
-          강사료 정산 및 승인을 위해 아래에서 추가 정보를 입력해주세요.
+          강사료 정산 계좌와 서류 확인을 위해 추가 정보 입력이 필요합니다.{'\n'}
+          입력을 완료해야 승인이 진행됩니다.
         </ThemedText>
 
         <Link href="/profile-setup" asChild>
