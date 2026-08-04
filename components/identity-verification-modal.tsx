@@ -14,6 +14,11 @@ export type IdentityVerificationResult =
 const STORE_ID = process.env.EXPO_PUBLIC_PORTONE_STORE_ID;
 const CHANNEL_KEY = process.env.EXPO_PUBLIC_PORTONE_CHANNEL_KEY;
 
+// PortOne 심사가 끝나기 전까지는 이 값들이 비어있다. 이 경우 회원가입 화면은
+// 본인인증 대신 이름/전화번호 직접 입력으로 대체한다 (signup.tsx 참고).
+// 심사 완료 후 STORE_ID/CHANNEL_KEY 환경변수만 채우면 자동으로 본인인증 플로우로 전환된다.
+export const isIdentityVerificationEnabled = Boolean(STORE_ID && CHANNEL_KEY);
+
 // PortOne 브라우저 SDK를 인라인 HTML로 띄워 본인인증 팝업(PASS/카카오 등)을 진행한다.
 // daum-address-search.tsx와 같은 패턴: 실제 페이지처럼 보이는 baseUrl을 줘야 WKWebView가
 // 내부 팝업/터치를 정상 처리한다.

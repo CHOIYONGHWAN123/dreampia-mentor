@@ -14,6 +14,7 @@ import { AuthTextField } from '@/components/auth-text-field';
 import { HtmlContent } from '@/components/html-content';
 import {
   IdentityVerificationModal,
+  isIdentityVerificationEnabled,
   type IdentityVerificationResult,
 } from '@/components/identity-verification-modal';
 import { ThemedText } from '@/components/themed-text';
@@ -46,6 +47,8 @@ export default function SignupScreen() {
 
   const [verified, setVerified] = useState<VerifiedIdentity | null>(null);
   const [verifyModalVisible, setVerifyModalVisible] = useState(false);
+  const [manualName, setManualName] = useState('');
+  const [manualPhone, setManualPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
@@ -77,10 +80,28 @@ export default function SignupScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!verified) {
-      setError('본인인증을 진행해주세요.');
-      return;
+    let name: string;
+    let phone: string;
+    let identityVerificationCi: string | null;
+
+    if (isIdentityVerificationEnabled) {
+      if (!verified) {
+        setError('본인인증을 진행해주세요.');
+        return;
+      }
+      name = verified.name;
+      phone = verified.phone;
+      identityVerificationCi = verified.ci;
+    } else {
+      if (!manualName.trim() || !manualPhone.trim()) {
+        setError('이름과 전화번호를 입력해주세요.');
+        return;
+      }
+      name = manualName.trim();
+      phone = manualPhone.trim();
+      identityVerificationCi = null;
     }
+
     if (!email.trim() || !password) {
       setError('모든 항목을 입력해주세요.');
       return;
@@ -108,10 +129,10 @@ export default function SignupScreen() {
       await signUp({
         email: email.trim(),
         password,
-        name: verified.name,
-        phone: verified.phone,
+        name,
+        phone,
         termsVersionId: terms.id,
-        identityVerificationCi: verified.ci,
+        identityVerificationCi,
       });
       router.replace('/');
     } catch (e) {
@@ -132,24 +153,44 @@ export default function SignupScreen() {
           </ThemedText>
 
           <ThemedView style={styles.form}>
-            <ThemedView style={styles.field}>
-              <ThemedText style={styles.label}>본인인증</ThemedText>
-              {verified ? (
-                <ThemedView style={styles.verifiedBox}>
-                  <ThemedView>
-                    <ThemedText type="defaultSemiBold">{verified.name}</ThemedText>
-                    <ThemedText style={styles.verifiedPhone}>{verified.phone}</ThemedText>
+            {isIdentityVerificationEnabled ? (
+              <ThemedView style={styles.field}>
+                <ThemedText style={styles.label}>본인인증</ThemedText>
+                {verified ? (
+                  <ThemedView style={styles.verifiedBox}>
+                    <ThemedView>
+                      <ThemedText type="defaultSemiBold">{verified.name}</ThemedText>
+                      <ThemedText style={styles.verifiedPhone}>{verified.phone}</ThemedText>
+                    </ThemedView>
+                    <TouchableOpacity onPress={() => setVerifyModalVisible(true)}>
+                      <ThemedText type="link">다시 인증하기</ThemedText>
+                    </TouchableOpacity>
                   </ThemedView>
-                  <TouchableOpacity onPress={() => setVerifyModalVisible(true)}>
-                    <ThemedText type="link">다시 인증하기</ThemedText>
+                ) : (
+                  <TouchableOpacity style={styles.verifyButton} onPress={() => setVerifyModalVisible(true)}>
+                    <ThemedText style={styles.verifyButtonText}>본인인증하기</ThemedText>
                   </TouchableOpacity>
-                </ThemedView>
-              ) : (
-                <TouchableOpacity style={styles.verifyButton} onPress={() => setVerifyModalVisible(true)}>
-                  <ThemedText style={styles.verifyButtonText}>본인인증하기</ThemedText>
-                </TouchableOpacity>
-              )}
-            </ThemedView>
+                )}
+              </ThemedView>
+            ) : (
+              <>
+                <AuthTextField
+                  label="이름"
+                  value={manualName}
+                  onChangeText={setManualName}
+                  placeholder="홍길동"
+                  autoComplete="name"
+                />
+                <AuthTextField
+                  label="전화번호"
+                  value={manualPhone}
+                  onChangeText={setManualPhone}
+                  placeholder="010-0000-0000"
+                  keyboardType="phone-pad"
+                  autoComplete="tel"
+                />
+              </>
+            )}
             <AuthTextField
               label="이메일"
               value={email}
