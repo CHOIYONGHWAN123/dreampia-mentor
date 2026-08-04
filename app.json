@@ -9,7 +9,8 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.dreampia.mentorapp"
     },
     "android": {
       "adaptiveIcon": {
@@ -44,6 +45,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "f0c00f08-2f5f-4d30-8370-d80862e86bd6"
+      }
+    },
+    "owner": "yoojaty"
   }
 }
