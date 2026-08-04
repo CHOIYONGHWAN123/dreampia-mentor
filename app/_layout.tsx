@@ -53,6 +53,7 @@ function RootNavigator() {
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       </Stack.Protected>
       <Stack.Screen name="privacy" options={{ title: '개인정보처리방침' }} />
+      <Stack.Screen name="support" options={{ title: '고객 지원' }} />
     </Stack>
   );
 }
