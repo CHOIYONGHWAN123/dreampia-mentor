@@ -11,6 +11,18 @@ import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/supabase';
 
 type ScheduleRow = Database['public']['Views']['mentor_invitation_requests']['Row'];
+type SubMentorScheduleRow = Database['public']['Functions']['get_sub_mentor_schedule']['Returns'][number];
+
+type CalendarEvent = {
+  eventRowId: string;
+  mentorId: string;
+  mentorName: string;
+  startTime: string | null;
+  endTime: string | null;
+  institutionName: string | null;
+  unitTitle: string | null;
+  programName: string | null;
+};
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -57,11 +69,11 @@ function formatTime(iso: string) {
   return d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
-const DOT_COLORS = ['#0a7ea4', '#2e7d32', '#c77700', '#8e24aa'];
+const DOT_COLORS = ['#0a7ea4', '#2e7d32', '#c77700', '#8e24aa', '#c62828', '#455a64'];
 
 export default function LectureScheduleScreen() {
   const router = useRouter();
-  const { session } = useAuth();
+  const { session, mentor } = useAuth();
   const mentorId = session?.user.id;
 
   const now = new Date();
@@ -70,23 +82,30 @@ export default function LectureScheduleScreen() {
   const [selectedDate, setSelectedDate] = useState(todayKey());
 
   const [rows, setRows] = useState<ScheduleRow[]>([]);
+  const [subRows, setSubRows] = useState<SubMentorScheduleRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!mentorId) return;
-    const { data, error } = await supabase
-      .from('mentor_invitation_requests')
-      .select('*')
-      .eq('assigned_mentor_id', mentorId)
-      .order('start_time', { ascending: true });
+    const [ownRes, subRes] = await Promise.all([
+      supabase
+        .from('mentor_invitation_requests')
+        .select('*')
+        .eq('assigned_mentor_id', mentorId)
+        .order('start_time', { ascending: true }),
+      supabase.rpc('get_sub_mentor_schedule'),
+    ]);
 
-    if (error) {
-      setLoadError(error.message);
+    if (ownRes.error) {
+      setLoadError(ownRes.error.message);
+    } else if (subRes.error) {
+      setLoadError(subRes.error.message);
     } else {
       setLoadError(null);
-      setRows(data ?? []);
+      setRows(ownRes.data ?? []);
+      setSubRows(subRes.data ?? []);
     }
     setLoading(false);
     setRefreshing(false);
@@ -101,17 +120,66 @@ export default function LectureScheduleScreen() {
     load();
   };
 
+  const events = useMemo<CalendarEvent[]>(() => {
+    const ownEvents: CalendarEvent[] = rows
+      .filter((row) => row.event_row_id && row.mentor_id)
+      .map((row) => ({
+        eventRowId: row.event_row_id as string,
+        mentorId: row.mentor_id as string,
+        mentorName: mentor?.name ?? '나',
+        startTime: row.start_time,
+        endTime: row.end_time,
+        institutionName: row.institution_name,
+        unitTitle: row.unit_title,
+        programName: row.program_name,
+      }));
+    const subEvents: CalendarEvent[] = subRows.map((row) => ({
+      eventRowId: row.event_row_id,
+      mentorId: row.mentor_id,
+      mentorName: row.mentor_name,
+      startTime: row.start_time,
+      endTime: row.end_time,
+      institutionName: row.institution_name,
+      unitTitle: row.unit_title,
+      programName: row.program_name,
+    }));
+    return [...ownEvents, ...subEvents];
+  }, [rows, subRows, mentor]);
+
+  // 강사(본인 + 소속강사)별로 캘린더 점/목록 색상을 고정 배정한다. 본인은 항상 첫 색상.
+  const mentorColors = useMemo(() => {
+    const map = new Map<string, string>();
+    if (mentorId) map.set(mentorId, DOT_COLORS[0]);
+    const subMentorIds = [...new Set(subRows.map((row) => row.mentor_id))].sort();
+    subMentorIds.forEach((id, i) => {
+      if (!map.has(id)) map.set(id, DOT_COLORS[(i + 1) % DOT_COLORS.length]);
+    });
+    return map;
+  }, [mentorId, subRows]);
+
+  const legend = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const e of events) {
+      if (!seen.has(e.mentorId)) seen.set(e.mentorId, e.mentorName);
+    }
+    return [...seen.entries()].map(([id, name]) => ({
+      mentorId: id,
+      name,
+      color: mentorColors.get(id) ?? DOT_COLORS[0],
+    }));
+  }, [events, mentorColors]);
+
   const eventsByDate = useMemo(() => {
-    const map = new Map<string, ScheduleRow[]>();
-    for (const row of rows) {
-      if (!row.start_time) continue;
-      const key = row.start_time.slice(0, 10);
+    const map = new Map<string, CalendarEvent[]>();
+    for (const event of events) {
+      if (!event.startTime) continue;
+      const key = event.startTime.slice(0, 10);
       const list = map.get(key) ?? [];
-      list.push(row);
+      list.push(event);
       map.set(key, list);
     }
     return map;
-  }, [rows]);
+  }, [events]);
 
   const grid = useMemo(() => buildMonthGrid(year, month), [year, month]);
   const selectedEvents = eventsByDate.get(selectedDate) ?? [];
@@ -134,8 +202,8 @@ export default function LectureScheduleScreen() {
     setSelectedDate(todayKey());
   };
 
-  const openDetail = (row: ScheduleRow) => {
-    router.push({ pathname: '/lecture-schedule-detail', params: { id: row.event_row_id ?? '' } });
+  const openDetail = (event: CalendarEvent) => {
+    router.push({ pathname: '/lecture-schedule-detail', params: { id: event.eventRowId } });
   };
 
   if (loading) {
@@ -182,7 +250,7 @@ export default function LectureScheduleScreen() {
 
         <View style={styles.grid}>
           {grid.map((cell) => {
-            const events = eventsByDate.get(cell.key) ?? [];
+            const dayEvents = eventsByDate.get(cell.key) ?? [];
             const isSelected = cell.key === selectedDate;
             const isToday = cell.key === today;
             return (
@@ -203,10 +271,10 @@ export default function LectureScheduleScreen() {
                   {cell.day}
                 </ThemedText>
                 <View style={styles.dotRow}>
-                  {events.slice(0, 3).map((e, i) => (
+                  {dayEvents.slice(0, 4).map((e, i) => (
                     <View
-                      key={e.event_row_id ?? i}
-                      style={[styles.dot, { backgroundColor: DOT_COLORS[i % DOT_COLORS.length] }]}
+                      key={e.eventRowId ?? i}
+                      style={[styles.dot, { backgroundColor: mentorColors.get(e.mentorId) ?? DOT_COLORS[0] }]}
                     />
                   ))}
                 </View>
@@ -215,23 +283,48 @@ export default function LectureScheduleScreen() {
           })}
         </View>
 
+        {legend.length > 1 && (
+          <View style={styles.legendRow}>
+            {legend.map((item) => (
+              <View key={item.mentorId} style={styles.legendItem}>
+                <View style={[styles.dot, { backgroundColor: item.color }]} />
+                <ThemedText style={styles.legendLabel}>
+                  {item.mentorId === mentorId ? `${item.name} (나)` : item.name}
+                </ThemedText>
+              </View>
+            ))}
+          </View>
+        )}
+
         <ThemedView style={styles.agenda}>
           <ThemedText type="defaultSemiBold">{selectedDate} 확정 일정</ThemedText>
           {selectedEvents.length === 0 && (
             <ThemedText style={styles.emptyText}>이 날짜에 확정된 강의가 없습니다.</ThemedText>
           )}
-          {selectedEvents.map((row) => (
+          {selectedEvents.map((event) => (
             <TouchableOpacity
-              key={row.event_row_id}
+              key={event.eventRowId}
               style={styles.agendaItem}
-              onPress={() => openDetail(row)}>
-              <ThemedText style={styles.agendaTime}>
-                {row.start_time && formatTime(row.start_time)}
-                {row.end_time ? ` ~ ${formatTime(row.end_time)}` : ''}
-              </ThemedText>
-              <ThemedText type="defaultSemiBold">{row.institution_name ?? '-'}</ThemedText>
+              onPress={() => openDetail(event)}>
+              <View style={styles.agendaHeaderRow}>
+                <ThemedText style={styles.agendaTime}>
+                  {event.startTime && formatTime(event.startTime)}
+                  {event.endTime ? ` ~ ${formatTime(event.endTime)}` : ''}
+                </ThemedText>
+                {legend.length > 1 && (
+                  <View style={styles.agendaMentorTag}>
+                    <View
+                      style={[styles.dot, { backgroundColor: mentorColors.get(event.mentorId) ?? DOT_COLORS[0] }]}
+                    />
+                    <ThemedText style={styles.agendaMentorName}>
+                      {event.mentorId === mentorId ? '나' : event.mentorName}
+                    </ThemedText>
+                  </View>
+                )}
+              </View>
+              <ThemedText type="defaultSemiBold">{event.institutionName ?? '-'}</ThemedText>
               <ThemedText style={styles.agendaSub}>
-                {row.unit_title ?? row.program_name ?? '-'}
+                {event.unitTitle ?? event.programName ?? '-'}
               </ThemedText>
             </TouchableOpacity>
           ))}
@@ -280,6 +373,34 @@ const styles = StyleSheet.create({
   weekdayLabel: {
     flex: 1,
     textAlign: 'center',
+    fontSize: 12,
+    color: '#687076',
+  },
+  legendRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  legendLabel: {
+    fontSize: 12,
+    color: '#687076',
+  },
+  agendaHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  agendaMentorTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  agendaMentorName: {
     fontSize: 12,
     color: '#687076',
   },

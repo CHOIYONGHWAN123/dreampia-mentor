@@ -6,11 +6,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FilePicker } from '@/components/file-picker';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useAuth } from '@/contexts/auth-context';
 import { supabase } from '@/lib/supabase';
 import { uploadFile, type PickedFile } from '@/lib/upload-file';
 import type { Database } from '@/types/supabase';
 
 type DetailRow = Database['public']['Views']['mentor_event_row_detail']['Row'];
+type SubMentorDetailRow = Database['public']['Functions']['get_sub_mentor_event_row_detail']['Returns'][number];
+type AnyDetailRow = DetailRow | SubMentorDetailRow;
 type EventPhoto = Database['public']['Tables']['event_photos']['Row'];
 
 const days = ['일', '월', '화', '수', '목', '금', '토'];
@@ -40,7 +43,7 @@ function hoursUntil(iso: string | null) {
   return (new Date(iso).getTime() - Date.now()) / 3_600_000;
 }
 
-function materialCostText(detail: DetailRow) {
+function materialCostText(detail: AnyDetailRow) {
   if (detail.prep_by === '강사') return formatFee(detail.mentor_material_cost);
   if (detail.prep_by === '드림피아') return formatFee(detail.dreampia_material_cost);
   if (detail.prep_by === '모두가능') {
@@ -51,8 +54,10 @@ function materialCostText(detail: DetailRow) {
 
 export default function LectureScheduleDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { session } = useAuth();
+  const mentorId = session?.user.id;
 
-  const [detail, setDetail] = useState<DetailRow | null>(null);
+  const [detail, setDetail] = useState<AnyDetailRow | null>(null);
   const [photos, setPhotos] = useState<EventPhoto[]>([]);
   const [payerNames, setPayerNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -61,22 +66,37 @@ export default function LectureScheduleDetailScreen() {
   const [uploadingCriminal, setUploadingCriminal] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
+  // 소속강사 일정은 본인 것이 아니라 mentor_event_row_detail(본인 전용 뷰)에는 잡히지 않는다.
+  // 먼저 본인 뷰로 시도하고, 없으면 소속대표용 RPC로 재조회한다. 소속강사 일정은 읽기 전용이다.
+  const isOwn = !!detail && !!mentorId && detail.mentor_id === mentorId;
+
   const load = useCallback(async () => {
     if (!id) return;
-    const [detailRes, photosRes] = await Promise.all([
-      supabase.from('mentor_event_row_detail').select('*').eq('event_row_id', id).maybeSingle(),
-      supabase.from('event_photos').select('*').eq('event_rows_id', id).order('created_at'),
-    ]);
+    const ownRes = await supabase.from('mentor_event_row_detail').select('*').eq('event_row_id', id).maybeSingle();
 
-    if (detailRes.error) {
-      setLoadError(detailRes.error.message);
+    if (ownRes.error) {
+      setLoadError(ownRes.error.message);
       setLoading(false);
       return;
     }
-    setDetail(detailRes.data);
+
+    let resolvedDetail: AnyDetailRow | null = ownRes.data;
+    if (!resolvedDetail) {
+      const subRes = await supabase.rpc('get_sub_mentor_event_row_detail', { p_event_row_id: id });
+      if (subRes.error) {
+        setLoadError(subRes.error.message);
+        setLoading(false);
+        return;
+      }
+      resolvedDetail = subRes.data?.[0] ?? null;
+    }
+
+    setDetail(resolvedDetail);
+
+    const photosRes = await supabase.from('event_photos').select('*').eq('event_rows_id', id).order('created_at');
     setPhotos(photosRes.data ?? []);
 
-    const payerIds = [detailRes.data?.lecture_fee_payer_id, detailRes.data?.material_fee_payer_id].filter(
+    const payerIds = [resolvedDetail?.lecture_fee_payer_id, resolvedDetail?.material_fee_payer_id].filter(
       (v): v is string => !!v
     );
     if (payerIds.length > 0) {
@@ -95,16 +115,16 @@ export default function LectureScheduleDetailScreen() {
   }, [load]);
 
   const canTogglePreparing = useMemo(
-    () => !!detail && hoursUntil(detail.start_time) <= 4,
-    [detail]
+    () => isOwn && !!detail && hoursUntil(detail.start_time) <= 4,
+    [isOwn, detail]
   );
   const canToggleAttendance = useMemo(
-    () => !!detail && hoursUntil(detail.start_time) <= 1,
-    [detail]
+    () => isOwn && !!detail && hoursUntil(detail.start_time) <= 1,
+    [isOwn, detail]
   );
 
   const togglePreparing = async () => {
-    if (!detail || !id) return;
+    if (!isOwn || !detail || !id) return;
     const next = !detail.preparing;
     setDetail({ ...detail, preparing: next });
     const { error } = await supabase.from('event_rows').update({ preparing: next }).eq('id', id);
@@ -115,7 +135,7 @@ export default function LectureScheduleDetailScreen() {
   };
 
   const toggleAttendance = async () => {
-    if (!detail || !id) return;
+    if (!isOwn || !detail || !id) return;
     const next = !detail.attendance;
     setDetail({ ...detail, attendance: next });
     const { error } = await supabase.from('event_rows').update({ attendance: next }).eq('id', id);
@@ -126,7 +146,7 @@ export default function LectureScheduleDetailScreen() {
   };
 
   const handleCriminalFile = async (file: PickedFile | null) => {
-    if (!file || !id) return;
+    if (!isOwn || !file || !id) return;
     setActionError(null);
     setUploadingCriminal(true);
     try {
@@ -145,7 +165,7 @@ export default function LectureScheduleDetailScreen() {
   };
 
   const handlePhotoFile = async (file: PickedFile | null) => {
-    if (!file || !id) return;
+    if (!isOwn || !file || !id) return;
     setActionError(null);
     setUploadingPhoto(true);
     try {
@@ -165,6 +185,7 @@ export default function LectureScheduleDetailScreen() {
   };
 
   const deletePhoto = async (photoId: string) => {
+    if (!isOwn) return;
     const { error } = await supabase.from('event_photos').delete().eq('id', photoId);
     if (error) {
       setActionError(error.message);
@@ -196,6 +217,13 @@ export default function LectureScheduleDetailScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content}>
+        {!isOwn && (
+          <ThemedView style={styles.readOnlyBanner}>
+            <ThemedText style={styles.readOnlyText}>
+              {detail.mentor_name ?? '소속강사'}님의 일정입니다 (읽기 전용)
+            </ThemedText>
+          </ThemedView>
+        )}
         {actionError && <ThemedText style={styles.errorText}>{actionError}</ThemedText>}
 
         <ThemedView style={styles.card}>
@@ -221,20 +249,29 @@ export default function LectureScheduleDetailScreen() {
           <Field label="강의실" value={detail.classroom ?? '-'} />
           <Field label="대기실" value={detail.instructor_waiting_room ?? '-'} />
 
-          <Checkbox
-            label="행사준비"
-            checked={!!detail.preparing}
-            disabled={!canTogglePreparing}
-            disabledHint="행사 시작 4시간 전부터 체크할 수 있습니다."
-            onToggle={togglePreparing}
-          />
-          <Checkbox
-            label="출석"
-            checked={!!detail.attendance}
-            disabled={!canToggleAttendance}
-            disabledHint="행사 시작 1시간 전부터 체크할 수 있습니다."
-            onToggle={toggleAttendance}
-          />
+          {isOwn ? (
+            <>
+              <Checkbox
+                label="행사준비"
+                checked={!!detail.preparing}
+                disabled={!canTogglePreparing}
+                disabledHint="행사 시작 4시간 전부터 체크할 수 있습니다."
+                onToggle={togglePreparing}
+              />
+              <Checkbox
+                label="출석"
+                checked={!!detail.attendance}
+                disabled={!canToggleAttendance}
+                disabledHint="행사 시작 1시간 전부터 체크할 수 있습니다."
+                onToggle={toggleAttendance}
+              />
+            </>
+          ) : (
+            <>
+              <Field label="행사준비" value={detail.preparing ? '완료' : '미완료'} />
+              <Field label="출석" value={detail.attendance ? '완료' : '미완료'} />
+            </>
+          )}
 
           <Field label="준비물 준비" value={detail.prep_by ?? '-'} />
           <Field label="인원수" value={detail.headcount?.toString() ?? '-'} />
@@ -260,12 +297,16 @@ export default function LectureScheduleDetailScreen() {
             <ThemedText style={styles.statusText}>
               {detail.criminal_background_check ? '✓ 등록됨' : '미등록'}
             </ThemedText>
-            <FilePicker
-              file={null}
-              onChange={handleCriminalFile}
-              mimeTypes={['application/pdf', 'image/*']}
-            />
-            {uploadingCriminal && <ActivityIndicator />}
+            {isOwn && (
+              <>
+                <FilePicker
+                  file={null}
+                  onChange={handleCriminalFile}
+                  mimeTypes={['application/pdf', 'image/*']}
+                />
+                {uploadingCriminal && <ActivityIndicator />}
+              </>
+            )}
           </View>
 
           <View style={styles.uploadSection}>
@@ -275,12 +316,14 @@ export default function LectureScheduleDetailScreen() {
                 <ThemedText style={styles.photoName} numberOfLines={1}>
                   {photo.url.split('/').pop()}
                 </ThemedText>
-                <TouchableOpacity onPress={() => deletePhoto(photo.id)}>
-                  <ThemedText style={styles.removeText}>삭제</ThemedText>
-                </TouchableOpacity>
+                {isOwn && (
+                  <TouchableOpacity onPress={() => deletePhoto(photo.id)}>
+                    <ThemedText style={styles.removeText}>삭제</ThemedText>
+                  </TouchableOpacity>
+                )}
               </View>
             ))}
-            {photos.length < 2 && (
+            {isOwn && photos.length < 2 && (
               <FilePicker file={null} onChange={handlePhotoFile} mimeTypes={['image/*']} />
             )}
             {uploadingPhoto && <ActivityIndicator />}
@@ -351,6 +394,15 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: '#c0392b',
+  },
+  readOnlyBanner: {
+    backgroundColor: '#fff8e1',
+    borderRadius: 8,
+    padding: 10,
+  },
+  readOnlyText: {
+    fontSize: 13,
+    color: '#8d6e00',
   },
   card: {
     borderWidth: 1,

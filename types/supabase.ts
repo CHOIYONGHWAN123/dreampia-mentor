@@ -458,6 +458,7 @@ export type Database = {
           contact_email: string | null
           contact_name: string | null
           contact_phone: string | null
+          contract_delivered: boolean
           contract_status: Database["public"]["Enums"]["contract_status"] | null
           contract_type: Database["public"]["Enums"]["contract_type"] | null
           created_at: string
@@ -470,6 +471,7 @@ export type Database = {
             | Database["public"]["Enums"]["crime_check_status"]
             | null
           estimate_file_url: string | null
+          event_category_id: string | null
           event_check_status: number
           event_end_at: string | null
           event_start_at: string | null
@@ -482,6 +484,7 @@ export type Database = {
           indoor_shoes_note: string | null
           inflow_source: Database["public"]["Enums"]["inflow_source"] | null
           institution_id: string | null
+          institution_request_delivered: boolean | null
           institution_request_status:
             | Database["public"]["Enums"]["institution_request_status"]
             | null
@@ -506,7 +509,6 @@ export type Database = {
           report_sent: boolean | null
           requested_dates: string[] | null
           sales_admin_id: string | null
-          school_request_delivered: boolean | null
           start_recruit_at: string | null
           student_rotation: string | null
           supplies_status: Database["public"]["Enums"]["supplies_status"] | null
@@ -523,6 +525,7 @@ export type Database = {
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
+          contract_delivered?: boolean
           contract_status?:
             | Database["public"]["Enums"]["contract_status"]
             | null
@@ -537,6 +540,7 @@ export type Database = {
             | Database["public"]["Enums"]["crime_check_status"]
             | null
           estimate_file_url?: string | null
+          event_category_id?: string | null
           event_check_status?: number
           event_end_at?: string | null
           event_start_at?: string | null
@@ -549,6 +553,7 @@ export type Database = {
           indoor_shoes_note?: string | null
           inflow_source?: Database["public"]["Enums"]["inflow_source"] | null
           institution_id?: string | null
+          institution_request_delivered?: boolean | null
           institution_request_status?:
             | Database["public"]["Enums"]["institution_request_status"]
             | null
@@ -573,7 +578,6 @@ export type Database = {
           report_sent?: boolean | null
           requested_dates?: string[] | null
           sales_admin_id?: string | null
-          school_request_delivered?: boolean | null
           start_recruit_at?: string | null
           student_rotation?: string | null
           supplies_status?:
@@ -592,6 +596,7 @@ export type Database = {
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
+          contract_delivered?: boolean
           contract_status?:
             | Database["public"]["Enums"]["contract_status"]
             | null
@@ -606,6 +611,7 @@ export type Database = {
             | Database["public"]["Enums"]["crime_check_status"]
             | null
           estimate_file_url?: string | null
+          event_category_id?: string | null
           event_check_status?: number
           event_end_at?: string | null
           event_start_at?: string | null
@@ -618,6 +624,7 @@ export type Database = {
           indoor_shoes_note?: string | null
           inflow_source?: Database["public"]["Enums"]["inflow_source"] | null
           institution_id?: string | null
+          institution_request_delivered?: boolean | null
           institution_request_status?:
             | Database["public"]["Enums"]["institution_request_status"]
             | null
@@ -642,7 +649,6 @@ export type Database = {
           report_sent?: boolean | null
           requested_dates?: string[] | null
           sales_admin_id?: string | null
-          school_request_delivered?: boolean | null
           start_recruit_at?: string | null
           student_rotation?: string | null
           supplies_status?:
@@ -657,6 +663,13 @@ export type Database = {
             columns: ["comm_admin_id"]
             isOneToOne: false
             referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_event_category_id_fkey"
+            columns: ["event_category_id"]
+            isOneToOne: false
+            referencedRelation: "event_categories"
             referencedColumns: ["id"]
           },
           {
@@ -728,6 +741,7 @@ export type Database = {
             | Database["public"]["Enums"]["institution_type"]
             | null
           instructor_waiting_room: string | null
+          is_deleted: boolean
           laptop_wifi_note: string | null
           name: string
           parking_note: string | null
@@ -754,6 +768,7 @@ export type Database = {
             | Database["public"]["Enums"]["institution_type"]
             | null
           instructor_waiting_room?: string | null
+          is_deleted?: boolean
           laptop_wifi_note?: string | null
           name: string
           parking_note?: string | null
@@ -780,6 +795,7 @@ export type Database = {
             | Database["public"]["Enums"]["institution_type"]
             | null
           instructor_waiting_room?: string | null
+          is_deleted?: boolean
           laptop_wifi_note?: string | null
           name?: string
           parking_note?: string | null
@@ -956,6 +972,7 @@ export type Database = {
           expires_at: string
           id: string
           is_all_approval_required: boolean
+          is_auto: boolean
           status: Database["public"]["Enums"]["invitation_status"]
         }
         Insert: {
@@ -964,6 +981,7 @@ export type Database = {
           expires_at?: string
           id?: string
           is_all_approval_required?: boolean
+          is_auto?: boolean
           status?: Database["public"]["Enums"]["invitation_status"]
         }
         Update: {
@@ -972,6 +990,7 @@ export type Database = {
           expires_at?: string
           id?: string
           is_all_approval_required?: boolean
+          is_auto?: boolean
           status?: Database["public"]["Enums"]["invitation_status"]
         }
         Relationships: [
@@ -1014,6 +1033,7 @@ export type Database = {
           occupation_program_unit_id: string | null
           ppt_file_url: string | null
           profile_file_url: string | null
+          program_score: number
         }
         Insert: {
           id?: string
@@ -1023,6 +1043,7 @@ export type Database = {
           occupation_program_unit_id?: string | null
           ppt_file_url?: string | null
           profile_file_url?: string | null
+          program_score?: number
         }
         Update: {
           id?: string
@@ -1032,6 +1053,7 @@ export type Database = {
           occupation_program_unit_id?: string | null
           ppt_file_url?: string | null
           profile_file_url?: string | null
+          program_score?: number
         }
         Relationships: [
           {
@@ -1097,7 +1119,7 @@ export type Database = {
           mentor_unique_code: string
           name: string
           phone: string | null
-          score: number | null
+          score: number
           terms_agreed_at: string | null
           terms_version_id: string | null
           user_id: string | null
@@ -1120,7 +1142,7 @@ export type Database = {
           mentor_unique_code: string
           name: string
           phone?: string | null
-          score?: number | null
+          score?: number
           terms_agreed_at?: string | null
           terms_version_id?: string | null
           user_id?: string | null
@@ -1143,7 +1165,7 @@ export type Database = {
           mentor_unique_code?: string
           name?: string
           phone?: string | null
-          score?: number | null
+          score?: number
           terms_agreed_at?: string | null
           terms_version_id?: string | null
           user_id?: string | null
@@ -1453,6 +1475,59 @@ export type Database = {
         }
         Relationships: []
       }
+      work_logs: {
+        Row: {
+          admin_id: string
+          created_at: string
+          event_id: string | null
+          id: string
+          task_type: Database["public"]["Enums"]["task_type"]
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          task_type: Database["public"]["Enums"]["task_type"]
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          task_type?: Database["public"]["Enums"]["task_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_logs_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_logs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_logs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mentor_event_row_detail"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "work_logs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mentor_invitation_requests"
+            referencedColumns: ["event_id"]
+          },
+        ]
+      }
     }
     Views: {
       mentor_event_row_detail: {
@@ -1565,9 +1640,17 @@ export type Database = {
         Args: { p_event_row_id: string; p_invitation_mentor_id: string }
         Returns: undefined
       }
+      advance_auto_invitation: {
+        Args: { p_invitation_id: string }
+        Returns: undefined
+      }
       cancel_event_row_assignment: {
         Args: { p_event_row_id: string }
         Returns: undefined
+      }
+      create_auto_invitation: {
+        Args: { p_event_row_ids: string[]; p_is_all_approval_required: boolean }
+        Returns: string
       }
       decline_invitation: {
         Args: { p_invitation_mentor_id: string }
@@ -1581,12 +1664,71 @@ export type Database = {
           name: string
         }[]
       }
+      find_next_auto_candidate_tier: {
+        Args: { p_invitation_id: string }
+        Returns: string[]
+      }
       generate_mentor_unique_code: { Args: never; Returns: string }
       get_mentor_names: {
         Args: { ids: string[] }
         Returns: {
           id: string
           name: string
+        }[]
+      }
+      get_sub_mentor_event_row_detail: {
+        Args: { p_event_row_id: string }
+        Returns: {
+          attendance: boolean
+          classroom: string
+          crime_check_info: string
+          criminal_background_check: string
+          dreampia_material_cost: number
+          end_time: string
+          event_id: string
+          event_name: string
+          event_row_id: string
+          headcount: number
+          indoor_shoes_note: string
+          institution_address: string
+          institution_name: string
+          instructor_waiting_room: string
+          laptop_wifi_note: string
+          lecture_fee: number
+          lecture_fee_after_tax: number
+          lecture_fee_payer_id: string
+          material_fee_payer_id: string
+          memo: string
+          mentor_id: string
+          mentor_material_cost: number
+          mentor_name: string
+          mentor_phone: string
+          notice: string
+          occupation_name: string
+          parking_note: string
+          prep_by: Database["public"]["Enums"]["prep_by"]
+          preparing: boolean
+          program_name: string
+          session_headcount: number
+          start_time: string
+          student_rotation: string
+          target: string
+          unit_id: string
+          unit_title: string
+        }[]
+      }
+      get_sub_mentor_schedule: {
+        Args: never
+        Returns: {
+          end_time: string
+          event_row_id: string
+          institution_name: string
+          mentor_id: string
+          mentor_name: string
+          program_name: string
+          start_time: string
+          target: string
+          unit_title: string
         }[]
       }
       is_approved_admin: { Args: never; Returns: boolean }
@@ -1636,7 +1778,7 @@ export type Database = {
         | "특수학교"
         | "문화센터"
       invitation_mentor_status: "대기" | "수락" | "거절" | "마감" | "만료"
-      invitation_status: "발송중" | "마감" | "만료" | "취소"
+      invitation_status: "발송중" | "마감" | "만료" | "취소" | "후보소진"
       lesson_category: "직업체험" | "문화예술체험" | "진로박람회"
       prep_by: "강사" | "드림피아" | "모두가능"
       recruit_status: "섭외대기" | "섭외진행중" | "섭외완료"
@@ -1651,6 +1793,17 @@ export type Database = {
         | "택배 예정"
         | "택배 발송"
         | "회수 필요"
+      task_type:
+        | "강사 섭외"
+        | "준비물 준비"
+        | "견적서 제작"
+        | "강사 섭외 전달"
+        | "학교 요청 사항 전달"
+        | "행정서류 전달"
+        | "계약 전달"
+        | "행사 안내"
+        | "행사 사진 전달"
+        | "보고서 전달"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1817,7 +1970,7 @@ export const Constants = {
         "문화센터",
       ],
       invitation_mentor_status: ["대기", "수락", "거절", "마감", "만료"],
-      invitation_status: ["발송중", "마감", "만료", "취소"],
+      invitation_status: ["발송중", "마감", "만료", "취소", "후보소진"],
       lesson_category: ["직업체험", "문화예술체험", "진로박람회"],
       prep_by: ["강사", "드림피아", "모두가능"],
       recruit_status: ["섭외대기", "섭외진행중", "섭외완료"],
@@ -1832,6 +1985,18 @@ export const Constants = {
         "택배 예정",
         "택배 발송",
         "회수 필요",
+      ],
+      task_type: [
+        "강사 섭외",
+        "준비물 준비",
+        "견적서 제작",
+        "강사 섭외 전달",
+        "학교 요청 사항 전달",
+        "행정서류 전달",
+        "계약 전달",
+        "행사 안내",
+        "행사 사진 전달",
+        "보고서 전달",
       ],
     },
   },
