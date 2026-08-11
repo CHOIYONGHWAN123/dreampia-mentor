@@ -2,18 +2,19 @@ import { useEffect, useState } from 'react';
 import { FlatList, Modal, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AuthTextField } from '@/components/auth-text-field';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { supabase } from '@/lib/supabase';
 
 type MentorOption = { id: string; name: string };
 
+// search_mentors가 본인 + 소속강사만 반환하도록 제한되어 있어(20260816010000 마이그레이션),
+// 대상이 많지 않으므로 검색 입력 없이 목록을 바로 보여준다.
 export function MentorSearchSelect({
   value,
   displayName,
   onChange,
-  placeholder = '멘토 검색',
+  placeholder = '선택',
   disabled = false,
 }: {
   value: string;
@@ -23,22 +24,17 @@ export function MentorSearchSelect({
   disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
   const [results, setResults] = useState<MentorOption[]>([]);
 
   useEffect(() => {
     if (!open) return;
-    const timer = setTimeout(() => {
-      supabase
-        .rpc('search_mentors', { q: search })
-        .then(({ data }: { data: MentorOption[] | null }) => setResults(data ?? []));
-    }, 250);
-    return () => clearTimeout(timer);
-  }, [search, open]);
+    supabase
+      .rpc('search_mentors', { q: '' })
+      .then(({ data }: { data: MentorOption[] | null }) => setResults(data ?? []));
+  }, [open]);
 
   const handleSelect = (mentor: MentorOption) => {
     onChange(mentor.id, mentor.name);
-    setSearch('');
     setOpen(false);
   };
 
@@ -75,19 +71,10 @@ export function MentorSearchSelect({
       <Modal visible={open} animationType="slide" onRequestClose={() => setOpen(false)}>
         <SafeAreaView style={styles.safeArea}>
           <ThemedView style={styles.header}>
-            <ThemedText type="subtitle">멘토 검색</ThemedText>
+            <ThemedText type="subtitle">본인/소속강사 선택</ThemedText>
             <TouchableOpacity onPress={() => setOpen(false)}>
               <ThemedText type="link">닫기</ThemedText>
             </TouchableOpacity>
-          </ThemedView>
-          <ThemedView style={styles.searchContainer}>
-            <AuthTextField
-              label="이름 검색"
-              value={search}
-              onChangeText={setSearch}
-              placeholder="이름을 입력하세요"
-              autoFocus
-            />
           </ThemedView>
           <FlatList
             data={results}
@@ -98,7 +85,7 @@ export function MentorSearchSelect({
               </TouchableOpacity>
             )}
             ListEmptyComponent={
-              <ThemedText style={styles.empty}>검색 결과가 없습니다.</ThemedText>
+              <ThemedText style={styles.empty}>선택할 수 있는 소속강사가 없습니다.</ThemedText>
             }
           />
         </SafeAreaView>
@@ -144,10 +131,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
-  },
-  searchContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 12,
   },
   resultRow: {
     paddingHorizontal: 20,

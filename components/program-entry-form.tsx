@@ -91,7 +91,7 @@ export function ProgramEntryForm({
             onChange={(id, name) =>
               onChange({ ...entry, lectureFeePayerId: id, lectureFeePayerName: name })
             }
-            placeholder="강사료 입금자 검색"
+            placeholder="강사료 입금자 선택"
             disabled={entry.lectureFeePayerId === selfId}
           />
         </ThemedView>
@@ -114,7 +114,7 @@ export function ProgramEntryForm({
             onChange={(id, name) =>
               onChange({ ...entry, materialFeePayerId: id, materialFeePayerName: name })
             }
-            placeholder="재료비 입금자 검색"
+            placeholder="재료비 입금자 선택"
             disabled={entry.materialFeePayerId === selfId}
           />
         </ThemedView>
