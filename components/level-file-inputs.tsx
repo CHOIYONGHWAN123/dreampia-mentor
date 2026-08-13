@@ -52,7 +52,6 @@ export function LevelFileInputs({
                 file={profileFiles[l.schoolLevel] ?? null}
                 existingFileUrl={existingProfileFileUrls[l.schoolLevel] ?? null}
                 onChange={(file) => onProfileChange(l.schoolLevel, file)}
-                mimeTypes={['application/pdf', 'application/msword', '*/*']}
                 templateAsset={require('@/assets/templates/profile-template.hwpx')}
                 templateFilename="드림피아_프로필_양식.hwpx"
               />
