@@ -12,11 +12,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AgreementSignature } from '@/components/agreement-signature';
 import { AreaSelector } from '@/components/area-selector';
 import { AuthTextField } from '@/components/auth-text-field';
 import { DaumAddressSearch } from '@/components/daum-address-search';
 import { FieldSectionForm } from '@/components/field-section-form';
-import { FilePicker } from '@/components/file-picker';
 import { MentorCodeSearch } from '@/components/mentor-code-search';
 import { SelectField } from '@/components/select-field';
 import { ThemedText } from '@/components/themed-text';
@@ -29,9 +29,10 @@ import {
   type ExistingMentorOccupationProgramRow,
   type FieldSectionState,
 } from '@/lib/mentor-profile-types';
+import { signAgreement } from '@/lib/sign-agreement';
 import { supabase } from '@/lib/supabase';
 import { useProgramCatalog } from '@/lib/use-program-catalog';
-import { uploadFile, type PickedFile } from '@/lib/upload-file';
+import { uploadFile } from '@/lib/upload-file';
 
 export default function ProfileEditScreen() {
   const router = useRouter();
@@ -50,7 +51,7 @@ export default function ProfileEditScreen() {
   const [belongsToId, setBelongsToId] = useState('');
   const [belongsToName, setBelongsToName] = useState('');
   const [existingAgreementFileUrl, setExistingAgreementFileUrl] = useState<string | null>(null);
-  const [agreementFile, setAgreementFile] = useState<PickedFile | null>(null);
+  const [signature, setSignature] = useState<string | null>(null);
   const [availableAreas, setAvailableAreas] = useState<string[]>([]);
   const [fieldSections, setFieldSections] = useState<FieldSectionState[]>([createFieldSection()]);
 
@@ -151,8 +152,8 @@ export default function ProfileEditScreen() {
       setError('주민번호, 주소, 계좌번호는 필수입니다.');
       return;
     }
-    if (!agreementFile && !existingAgreementFileUrl) {
-      setError('동의서 파일을 첨부해주세요.');
+    if (!signature && !existingAgreementFileUrl) {
+      setError('동의서에 서명해주세요.');
       return;
     }
     if (newPassword || newPasswordConfirm) {
@@ -174,10 +175,6 @@ export default function ProfileEditScreen() {
         if (pwError) throw new Error(pwError.message);
       }
 
-      const agreementFileUrl = agreementFile
-        ? await uploadFile('agreement-file', selfId, agreementFile)
-        : existingAgreementFileUrl;
-
       const { error: updateError } = await supabase
         .from('mentors')
         .update({
@@ -190,7 +187,6 @@ export default function ProfileEditScreen() {
           bank_account: bankAccountNumber.trim() || null,
           belongs_to: belongsToId || null,
           available_areas: availableAreas.length ? availableAreas : null,
-          agreement_file_url: agreementFileUrl,
         })
         .eq('id', selfId);
       if (updateError) throw new Error(updateError.message);
@@ -240,6 +236,13 @@ export default function ProfileEditScreen() {
           .from('mentor_occupation_programs')
           .insert(programRows);
         if (insertError) throw new Error(insertError.message);
+      }
+
+      // 재서명한 경우에만 동의서 PDF를 새로 만든다 (기존 서명을 유지하는 경우는 건드리지 않는다).
+      if (signature) {
+        const newAgreementFileUrl = await signAgreement(signature);
+        setExistingAgreementFileUrl(newAgreementFileUrl);
+        setSignature(null);
       }
 
       setNewPassword('');
@@ -357,18 +360,10 @@ export default function ProfileEditScreen() {
 
           <ThemedView style={styles.field}>
             <ThemedText style={styles.label}>동의서</ThemedText>
-            <FilePicker
-              file={agreementFile}
+            <AgreementSignature
+              signature={signature}
+              onChange={setSignature}
               existingFileUrl={existingAgreementFileUrl}
-              onChange={setAgreementFile}
-              mimeTypes={[
-                'application/pdf',
-                'application/msword',
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                '*/*',
-              ]}
-              templateAsset={require('@/assets/templates/agreement-form.hwpx')}
-              templateFilename="드림피아_동의서_양식.hwpx"
             />
           </ThemedView>
 

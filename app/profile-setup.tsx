@@ -10,11 +10,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AgreementSignature } from '@/components/agreement-signature';
 import { AreaSelector } from '@/components/area-selector';
 import { AuthTextField } from '@/components/auth-text-field';
 import { DaumAddressSearch } from '@/components/daum-address-search';
 import { FieldSectionForm } from '@/components/field-section-form';
-import { FilePicker } from '@/components/file-picker';
 import { MentorCodeSearch } from '@/components/mentor-code-search';
 import { SelectField } from '@/components/select-field';
 import { ThemedText } from '@/components/themed-text';
@@ -22,9 +22,10 @@ import { ThemedView } from '@/components/themed-view';
 import { BANK_OPTIONS } from '@/constants/banks';
 import { useAuth } from '@/contexts/auth-context';
 import { createFieldSection, type FieldSectionState } from '@/lib/mentor-profile-types';
+import { signAgreement } from '@/lib/sign-agreement';
 import { supabase } from '@/lib/supabase';
 import { useProgramCatalog } from '@/lib/use-program-catalog';
-import { uploadFile, type PickedFile } from '@/lib/upload-file';
+import { uploadFile } from '@/lib/upload-file';
 
 export default function ProfileSetupScreen() {
   const router = useRouter();
@@ -40,7 +41,7 @@ export default function ProfileSetupScreen() {
   const [bankAccountNumber, setBankAccountNumber] = useState('');
   const [belongsToId, setBelongsToId] = useState('');
   const [belongsToName, setBelongsToName] = useState('');
-  const [agreementFile, setAgreementFile] = useState<PickedFile | null>(null);
+  const [signature, setSignature] = useState<string | null>(null);
   const [availableAreas, setAvailableAreas] = useState<string[]>([]);
   const [fieldSections, setFieldSections] = useState<FieldSectionState[]>([createFieldSection()]);
 
@@ -64,16 +65,14 @@ export default function ProfileSetupScreen() {
       setError('주민번호, 주소, 계좌번호는 필수입니다.');
       return;
     }
-    if (!agreementFile) {
-      setError('동의서 파일을 첨부해주세요.');
+    if (!signature) {
+      setError('동의서에 서명해주세요.');
       return;
     }
 
     setError(null);
     setSubmitting(true);
     try {
-      const agreementFileUrl = await uploadFile('agreement-file', selfId, agreementFile);
-
       const { data: updatedRows, error: updateError } = await supabase
         .from('mentors')
         .update({
@@ -84,7 +83,6 @@ export default function ProfileSetupScreen() {
           bank_account: bankAccountNumber.trim() || null,
           belongs_to: belongsToId || null,
           available_areas: availableAreas.length ? availableAreas : null,
-          agreement_file_url: agreementFileUrl,
         })
         .eq('id', selfId)
         .select('id');
@@ -142,6 +140,9 @@ export default function ProfileSetupScreen() {
         if (insertError) throw new Error(insertError.message);
       }
 
+      // 방금 저장한 최신 프로필 값을 서버가 읽어 동의서 PDF를 만들기 때문에, 반드시 위 저장이 끝난 뒤 호출한다.
+      await signAgreement(signature);
+
       setSuccess(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : '저장에 실패했습니다.');
@@ -160,7 +161,7 @@ export default function ProfileSetupScreen() {
           <ThemedText style={styles.successText}>
             추가 정보가 등록되었습니다.{'\n'}관리자 승인을 기다려주세요.
           </ThemedText>
-          <TouchableOpacity style={styles.button} onPress={() => router.back()}>
+          <TouchableOpacity style={[styles.button, styles.successButton]} onPress={() => router.back()}>
             <ThemedText style={styles.buttonText}>확인</ThemedText>
           </TouchableOpacity>
         </ThemedView>
@@ -233,21 +234,8 @@ export default function ProfileSetupScreen() {
           </ThemedView>
 
           <ThemedView style={styles.field}>
-            <ThemedView style={styles.templateHeader}>
-              <ThemedText style={styles.label}>동의서</ThemedText>
-            </ThemedView>
-            <FilePicker
-              file={agreementFile}
-              onChange={setAgreementFile}
-              mimeTypes={[
-                'application/pdf',
-                'application/msword',
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                '*/*',
-              ]}
-              templateAsset={require('@/assets/templates/agreement-form.hwpx')}
-              templateFilename="드림피아_동의서_양식.hwpx"
-            />
+            <ThemedText style={styles.label}>동의서</ThemedText>
+            <AgreementSignature signature={signature} onChange={setSignature} />
           </ThemedView>
 
           <ThemedView style={styles.field}>
@@ -348,11 +336,6 @@ const styles = StyleSheet.create({
   bankNumber: {
     flex: 1,
   },
-  templateHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
   programsSection: {
     gap: 12,
     marginTop: 8,
@@ -389,5 +372,10 @@ const styles = StyleSheet.create({
   successText: {
     textAlign: 'center',
     lineHeight: 22,
+  },
+  successButton: {
+    minWidth: 200,
+    paddingHorizontal: 32,
+    marginTop: 8,
   },
 });
