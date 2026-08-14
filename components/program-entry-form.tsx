@@ -1,5 +1,6 @@
 import { StyleSheet, TouchableOpacity } from 'react-native';
 
+import { AuthTextField } from '@/components/auth-text-field';
 import { LevelFileInputs } from '@/components/level-file-inputs';
 import { MentorSearchSelect } from '@/components/mentor-search-select';
 import { ProgramUnitPicker, type ProgramOption, type UnitOption } from '@/components/program-unit-picker';
@@ -119,6 +120,15 @@ export function ProgramEntryForm({
           />
         </ThemedView>
       </ThemedView>
+
+      <AuthTextField
+        label="학교요청사항 (선택)"
+        value={entry.schoolRequestNote}
+        onChangeText={(text) => onChange({ ...entry, schoolRequestNote: text })}
+        placeholder="예: 의자 2개 필요합니다, 개인 크롬북 혹은 태블릿 필요합니다"
+        multiline
+        numberOfLines={3}
+      />
     </ThemedView>
   );
 }

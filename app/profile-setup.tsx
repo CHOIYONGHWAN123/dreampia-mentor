@@ -107,6 +107,7 @@ export default function ProfileSetupScreen() {
         material_fee_payer_id: string | null;
         ppt_file_url: string | null;
         profile_file_url: string | null;
+        school_request_note: string | null;
       }[] = [];
 
       for (const section of fieldSections) {
@@ -128,6 +129,7 @@ export default function ProfileSetupScreen() {
               material_fee_payer_id: entry.materialFeePayerId || null,
               ppt_file_url: pptFileUrl,
               profile_file_url: profileFileUrl,
+              school_request_note: entry.schoolRequestNote.trim() || null,
             });
           }
         }

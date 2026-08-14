@@ -73,7 +73,9 @@ export default function ProfileEditScreen() {
       supabase.from('mentors').select('*').eq('id', selfId).maybeSingle(),
       supabase
         .from('mentor_occupation_programs')
-        .select('occupation_program_unit_id, lecture_fee_payer_id, material_fee_payer_id, ppt_file_url, profile_file_url')
+        .select(
+          'occupation_program_unit_id, lecture_fee_payer_id, material_fee_payer_id, ppt_file_url, profile_file_url, school_request_note'
+        )
         .eq('mentor_id', selfId),
     ]);
 
@@ -205,6 +207,7 @@ export default function ProfileEditScreen() {
         material_fee_payer_id: string | null;
         ppt_file_url: string | null;
         profile_file_url: string | null;
+        school_request_note: string | null;
       }[] = [];
 
       for (const section of fieldSections) {
@@ -226,6 +229,7 @@ export default function ProfileEditScreen() {
               material_fee_payer_id: entry.materialFeePayerId || null,
               ppt_file_url: pptFileUrl,
               profile_file_url: profileFileUrl,
+              school_request_note: entry.schoolRequestNote.trim() || null,
             });
           }
         }

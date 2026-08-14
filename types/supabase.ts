@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       admins: {
@@ -509,6 +484,7 @@ export type Database = {
           report_sent: boolean | null
           requested_dates: string[] | null
           sales_admin_id: string | null
+          school_request_note: string | null
           start_recruit_at: string | null
           student_rotation: string | null
           supplies_status: Database["public"]["Enums"]["supplies_status"] | null
@@ -578,6 +554,7 @@ export type Database = {
           report_sent?: boolean | null
           requested_dates?: string[] | null
           sales_admin_id?: string | null
+          school_request_note?: string | null
           start_recruit_at?: string | null
           student_rotation?: string | null
           supplies_status?:
@@ -649,6 +626,7 @@ export type Database = {
           report_sent?: boolean | null
           requested_dates?: string[] | null
           sales_admin_id?: string | null
+          school_request_note?: string | null
           start_recruit_at?: string | null
           student_rotation?: string | null
           supplies_status?:
@@ -1034,6 +1012,7 @@ export type Database = {
           ppt_file_url: string | null
           profile_file_url: string | null
           program_score: number
+          school_request_note: string | null
         }
         Insert: {
           id?: string
@@ -1044,6 +1023,7 @@ export type Database = {
           ppt_file_url?: string | null
           profile_file_url?: string | null
           program_score?: number
+          school_request_note?: string | null
         }
         Update: {
           id?: string
@@ -1054,6 +1034,7 @@ export type Database = {
           ppt_file_url?: string | null
           profile_file_url?: string | null
           program_score?: number
+          school_request_note?: string | null
         }
         Relationships: [
           {
@@ -1648,6 +1629,10 @@ export type Database = {
         Args: { p_event_row_id: string }
         Returns: undefined
       }
+      count_all_approval_candidates: {
+        Args: { p_event_row_ids: string[] }
+        Returns: number
+      }
       create_auto_invitation: {
         Args: { p_event_row_ids: string[]; p_is_all_approval_required: boolean }
         Returns: string
@@ -1736,12 +1721,32 @@ export type Database = {
       is_authenticated_admin_or_mentor: { Args: never; Returns: boolean }
       is_authenticated_mentor: { Args: never; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
+      plan_auto_bundles_internal: {
+        Args: { p_event_row_ids: string[]; p_skip_initial_full_check?: boolean }
+        Returns: {
+          bundle_index: number
+          candidate_count: number
+          event_row_id: string
+        }[]
+      }
+      preview_auto_bundles: {
+        Args: { p_event_row_ids: string[] }
+        Returns: {
+          bundle_index: number
+          candidate_count: number
+          event_row_id: string
+        }[]
+      }
       search_mentors: {
         Args: { q?: string }
         Returns: {
           id: string
           name: string
         }[]
+      }
+      spawn_fallback_bundles: {
+        Args: { p_created_by: string; p_event_row_ids: string[] }
+        Returns: undefined
       }
     }
     Enums: {
@@ -1929,9 +1934,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       area: ["부산", "김해", "울산", "창원"],

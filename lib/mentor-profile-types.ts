@@ -14,6 +14,7 @@ export interface ProgramEntryState {
   lectureFeePayerName: string;
   materialFeePayerId: string;
   materialFeePayerName: string;
+  schoolRequestNote: string;
   pptFiles: Record<string, PickedFile | null>;
   profileFiles: Record<string, PickedFile | null>;
   // 회원정보 수정 화면에서 기존에 등록돼 있던 파일 URL. 새 파일을 고르지 않으면 이 값을 그대로 유지한다.
@@ -36,6 +37,7 @@ export function createProgramEntry(): ProgramEntryState {
     lectureFeePayerName: '',
     materialFeePayerId: '',
     materialFeePayerName: '',
+    schoolRequestNote: '',
     pptFiles: {},
     profileFiles: {},
     existingPptFileUrls: {},
@@ -58,6 +60,7 @@ export type ExistingMentorOccupationProgramRow = {
   material_fee_payer_id: string | null;
   ppt_file_url: string | null;
   profile_file_url: string | null;
+  school_request_note: string | null;
 };
 
 // 회원정보 수정 화면 전용: DB에 저장된 mentor_occupation_programs 행들을
@@ -102,6 +105,7 @@ export function buildFieldSectionsFromExisting(
       entry.lectureFeePayerName = row.lecture_fee_payer_id ? (payerNames[row.lecture_fee_payer_id] ?? '') : '';
       entry.materialFeePayerId = row.material_fee_payer_id ?? '';
       entry.materialFeePayerName = row.material_fee_payer_id ? (payerNames[row.material_fee_payer_id] ?? '') : '';
+      entry.schoolRequestNote = row.school_request_note ?? '';
       section.entriesByProgram.set(program.id, entry);
     }
 
