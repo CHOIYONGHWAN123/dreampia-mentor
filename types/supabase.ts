@@ -981,6 +981,41 @@ export type Database = {
           },
         ]
       }
+      mentor_devices: {
+        Row: {
+          created_at: string
+          expo_push_token: string
+          id: string
+          mentor_id: string
+          platform: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expo_push_token: string
+          id?: string
+          mentor_id: string
+          platform?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expo_push_token?: string
+          id?: string
+          mentor_id?: string
+          platform?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentor_devices_mentor_id_fkey"
+            columns: ["mentor_id"]
+            isOneToOne: false
+            referencedRelation: "mentors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mentor_find_id_attempts: {
         Row: {
           action: string
@@ -1272,6 +1307,67 @@ export type Database = {
             columns: ["field_id"]
             isOneToOne: false
             referencedRelation: "fields"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      push_notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          data: Json | null
+          error: string | null
+          expo_ticket: Json | null
+          id: string
+          invitation_mentor_id: string | null
+          mentor_id: string | null
+          status: string
+          title: string | null
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          data?: Json | null
+          error?: string | null
+          expo_ticket?: Json | null
+          id?: string
+          invitation_mentor_id?: string | null
+          mentor_id?: string | null
+          status?: string
+          title?: string | null
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          data?: Json | null
+          error?: string | null
+          expo_ticket?: Json | null
+          id?: string
+          invitation_mentor_id?: string | null
+          mentor_id?: string | null
+          status?: string
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_notifications_invitation_mentor_id_fkey"
+            columns: ["invitation_mentor_id"]
+            isOneToOne: false
+            referencedRelation: "invitation_mentors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "push_notifications_invitation_mentor_id_fkey"
+            columns: ["invitation_mentor_id"]
+            isOneToOne: false
+            referencedRelation: "mentor_invitation_requests"
+            referencedColumns: ["invitation_mentor_id"]
+          },
+          {
+            foreignKeyName: "push_notifications_mentor_id_fkey"
+            columns: ["mentor_id"]
+            isOneToOne: false
+            referencedRelation: "mentors"
             referencedColumns: ["id"]
           },
         ]

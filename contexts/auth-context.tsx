@@ -1,6 +1,7 @@
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useContext, useEffect, useState, type PropsWithChildren } from 'react';
 
+import { registerForPushNotificationsAsync } from '@/lib/register-push-token';
 import { supabase } from '@/lib/supabase';
 
 export type MentorProfile = {
@@ -74,6 +75,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         if (!isCancelled) {
           setMentor(data);
           setIsMentorLoading(false);
+          if (data) registerForPushNotificationsAsync(data.id).catch(() => {});
         }
       });
 

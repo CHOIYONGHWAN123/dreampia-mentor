@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "943189733863",
+    "project_id": "dreampia-cc7bc",
+    "storage_bucket": "dreampia-cc7bc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:943189733863:android:2b2234572ecfd96f694d42",
+        "android_client_info": {
+          "package_name": "com.dreampia.mentorapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAL3OQ2jQcaXUXE1YJAaNpqscv8pT7e6vc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

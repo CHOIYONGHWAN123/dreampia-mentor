@@ -1,5 +1,6 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
+import * as Notifications from 'expo-notifications';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -14,15 +15,42 @@ export const unstable_settings = {
   anchor: '(tabs)',
 };
 
+// 포그라운드에서도 알림 배너/사운드를 그대로 보여준다.
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
 function RootNavigator() {
   const { session, isLoading, mentor, isMentorLoading, isPasswordRecovery } = useAuth();
   const isReady = !isLoading && (!session || !isMentorLoading);
+  const router = useRouter();
 
   useEffect(() => {
     if (isReady) {
       SplashScreen.hideAsync();
     }
   }, [isReady]);
+
+  // 강사 섭외 초대 푸시 알림을 탭하면 강의요청 화면으로 이동한다.
+  // 앱이 완전히 꺼진 상태에서 알림 탭으로 켜진 경우(getLastNotificationResponseAsync)와,
+  // 앱이 이미 떠 있는 상태에서 알림을 탭한 경우(addNotificationResponseReceivedListener) 둘 다 처리한다.
+  useEffect(() => {
+    const navigateFromResponse = (response: Notifications.NotificationResponse | null) => {
+      const url = response?.notification.request.content.data?.url;
+      if (typeof url === 'string') router.push(url as never);
+    };
+
+    Notifications.getLastNotificationResponseAsync().then(navigateFromResponse);
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) =>
+      navigateFromResponse(response)
+    );
+    return () => subscription.remove();
+  }, [router]);
 
   if (!isReady) {
     return null;
