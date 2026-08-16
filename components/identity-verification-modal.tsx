@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { ActivityIndicator, Modal, StyleSheet, TouchableOpacity } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Modal, Platform, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import WebView from 'react-native-webview';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { loadPortOneScript } from '@/lib/portone-web';
 import { supabase } from '@/lib/supabase';
 
 export type IdentityVerificationResult =
@@ -87,6 +88,24 @@ export function IdentityVerificationModal({
   const [verifying, setVerifying] = useState(false);
   const [identityVerificationId] = useState(createIdentityVerificationId);
 
+  // PortOne이 identityVerificationId를 VERIFIED로 넘겨줬다고 클라이언트를 그대로 믿으면
+  // 위조가 가능하므로, 항상 서버(verify-identity)에서 비밀키로 재조회한 결과를 쓴다.
+  const confirmVerification = async (verificationId: string) => {
+    setVerifying(true);
+    const { data, error } = await supabase.functions.invoke<IdentityVerificationResult>(
+      'verify-identity',
+      { body: { identityVerificationId: verificationId } }
+    );
+    setVerifying(false);
+    onClose();
+
+    if (error || !data) {
+      onResult({ ok: false, error: '본인인증 확인에 실패했습니다. 다시 시도해주세요.' });
+      return;
+    }
+    onResult(data);
+  };
+
   const handleMessage = async (rawData: string) => {
     let parsed: { ok: boolean; error?: string; identityVerificationId?: string };
     try {
@@ -103,23 +122,57 @@ export function IdentityVerificationModal({
       return;
     }
 
-    setVerifying(true);
-    const { data, error } = await supabase.functions.invoke<IdentityVerificationResult>(
-      'verify-identity',
-      { body: { identityVerificationId: parsed.identityVerificationId } }
-    );
-    setVerifying(false);
-    onClose();
-
-    if (error || !data) {
-      onResult({ ok: false, error: '본인인증 확인에 실패했습니다. 다시 시도해주세요.' });
-      return;
-    }
-    onResult(data);
+    await confirmVerification(parsed.identityVerificationId);
   };
+
+  // 웹에서는 react-native-webview가 지원되지 않아, PortOne 브라우저 SDK를 페이지에 직접
+  // 불러와 requestIdentityVerification()을 호출한다(SDK가 알아서 팝업 창을 띄운다).
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !visible || !STORE_ID || !CHANNEL_KEY) return;
+
+    let cancelled = false;
+    loadPortOneScript()
+      .then(async () => {
+        if (cancelled || !window.PortOne) throw new Error('PortOne SDK 로드 실패');
+        const response = await window.PortOne.requestIdentityVerification({
+          storeId: STORE_ID,
+          identityVerificationId,
+          channelKey: CHANNEL_KEY,
+        });
+        if (cancelled) return;
+        if (response && response.code !== undefined) {
+          onClose();
+          onResult({ ok: false, error: response.message || '본인인증이 취소되었습니다.' });
+          return;
+        }
+        await confirmVerification(identityVerificationId);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        onClose();
+        onResult({ ok: false, error: '본인인증 중 오류가 발생했습니다.' });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
 
   if (!STORE_ID || !CHANNEL_KEY) {
     return null;
+  }
+
+  if (Platform.OS === 'web') {
+    // 팝업 창 자체가 UI이므로, 서버 확인이 진행되는 동안만 로딩 표시를 띄운다.
+    return (
+      <Modal visible={verifying} transparent animationType="fade">
+        <ThemedView style={styles.webOverlay}>
+          <ActivityIndicator />
+          <ThemedText style={styles.overlayText}>인증 결과 확인 중...</ThemedText>
+        </ThemedView>
+      </Modal>
+    );
   }
 
   return (
@@ -169,6 +222,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  webOverlay: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
