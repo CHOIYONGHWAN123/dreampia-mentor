@@ -4,6 +4,7 @@ import * as Notifications from 'expo-notifications';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import 'react-native-reanimated';
 
 import { AuthProvider, useAuth } from '@/contexts/auth-context';
@@ -15,15 +16,18 @@ export const unstable_settings = {
   anchor: '(tabs)',
 };
 
+// expo-notifications는 네이티브 전용이라 웹에서는 호출 자체가 에러를 던진다.
 // 포그라운드에서도 알림 배너/사운드를 그대로 보여준다.
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+if (Platform.OS !== 'web') {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+}
 
 function RootNavigator() {
   const { session, isLoading, mentor, isMentorLoading, isPasswordRecovery } = useAuth();
@@ -40,6 +44,8 @@ function RootNavigator() {
   // 앱이 완전히 꺼진 상태에서 알림 탭으로 켜진 경우(getLastNotificationResponseAsync)와,
   // 앱이 이미 떠 있는 상태에서 알림을 탭한 경우(addNotificationResponseReceivedListener) 둘 다 처리한다.
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+
     const navigateFromResponse = (response: Notifications.NotificationResponse | null) => {
       const url = response?.notification.request.content.data?.url;
       if (typeof url === 'string') router.push(url as never);

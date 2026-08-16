@@ -1,9 +1,8 @@
-import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { HtmlContent } from '@/components/html-content';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { supabase } from '@/lib/supabase';
@@ -42,30 +41,32 @@ export default function HomeScreen() {
   }, []);
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">회사 소개</ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.contentContainer}>
-        {loading && <ActivityIndicator />}
-        {!loading && error && <ThemedText>{error}</ThemedText>}
-        {!loading && !error && !contentHtml && (
-          <ThemedText>등록된 회사 소개가 없습니다.</ThemedText>
-        )}
-        {!loading && !error && contentHtml && <HtmlContent contentHtml={contentHtml} />}
-      </ThemedView>
-    </ParallaxScrollView>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <ThemedView style={styles.titleContainer}>
+          <ThemedText type="title">회사 소개</ThemedText>
+        </ThemedView>
+        <ThemedView style={styles.contentContainer}>
+          {loading && <ActivityIndicator />}
+          {!loading && error && <ThemedText>{error}</ThemedText>}
+          {!loading && !error && !contentHtml && (
+            <ThemedText>등록된 회사 소개가 없습니다.</ThemedText>
+          )}
+          {!loading && !error && contentHtml && <HtmlContent contentHtml={contentHtml} />}
+        </ThemedView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
+  content: {
+    padding: 32,
+    gap: 16,
+  },
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -73,12 +74,5 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     gap: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
   },
 });
