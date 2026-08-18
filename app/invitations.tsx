@@ -1,18 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Alert, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Radius, Shadows, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/auth-context';
+import { useThemeColor } from '@/hooks/use-theme-color';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/supabase';
 
@@ -111,6 +106,15 @@ function groupRows(rows: RequestRow[]): InvitationGroup[] {
 export default function InvitationsScreen() {
   const { session } = useAuth();
   const myMentorId = session?.user.id;
+  const card = useThemeColor({}, 'card');
+  const border = useThemeColor({}, 'border');
+  const textMuted = useThemeColor({}, 'textMuted');
+  const danger = useThemeColor({}, 'danger');
+  const success = useThemeColor({}, 'success');
+  const warning = useThemeColor({}, 'warning');
+  const warningMuted = useThemeColor({}, 'warningMuted');
+  const surface = useThemeColor({}, 'surface');
+  const primary = useThemeColor({}, 'primary');
 
   const [rows, setRows] = useState<RequestRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -208,35 +212,40 @@ export default function InvitationsScreen() {
         ListHeaderComponent={
           <ThemedView style={styles.header}>
             <ThemedText type="title">강의요청</ThemedText>
-            {loadError && <ThemedText style={styles.errorText}>{loadError}</ThemedText>}
-            {actionError && <ThemedText style={styles.errorText}>{actionError}</ThemedText>}
+            {loadError && <ThemedText style={[styles.errorText, { color: danger }]}>{loadError}</ThemedText>}
+            {actionError && (
+              <ThemedText style={[styles.errorText, { color: danger }]}>{actionError}</ThemedText>
+            )}
           </ThemedView>
         }
         ListEmptyComponent={
           <ThemedView style={styles.centered}>
-            <ThemedText style={styles.emptyText}>받은 강의요청이 없습니다.</ThemedText>
+            <ThemedText style={[styles.emptyText, { color: textMuted }]}>받은 강의요청이 없습니다.</ThemedText>
           </ThemedView>
         }
         renderItem={({ item: group }) => {
           const isPending = group.mentorStatus === '대기' && group.invitationStatus === '발송중';
 
           return (
-            <ThemedView style={styles.card}>
+            <ThemedView style={[styles.card, { backgroundColor: card, boxShadow: Shadows.card }]}>
               <View style={styles.cardHeader}>
                 <View style={styles.badgeRow}>
-                  <View style={[styles.badge, isPending ? styles.badgePending : styles.badgeClosed]}>
-                    <ThemedText style={styles.badgeText}>
+                  <View
+                    style={[styles.badge, { backgroundColor: isPending ? warningMuted : surface }]}>
+                    <ThemedText style={[styles.badgeText, { color: isPending ? warning : textMuted }]}>
                       {MENTOR_STATUS_LABEL[group.mentorStatus] ?? group.mentorStatus}
                     </ThemedText>
                   </View>
                   {group.isAllApprovalRequired && (
-                    <View style={[styles.badge, styles.badgeAll]}>
-                      <ThemedText style={styles.badgeText}>모든수락</ThemedText>
+                    <View style={[styles.badge, { backgroundColor: primary + '1f' }]}>
+                      <ThemedText style={[styles.badgeText, { color: primary }]}>모든수락</ThemedText>
                     </View>
                   )}
                 </View>
                 {isPending && (
-                  <ThemedText style={styles.remaining}>{formatRemaining(group.expiresAt)}</ThemedText>
+                  <ThemedText style={[styles.remaining, { color: warning }]}>
+                    {formatRemaining(group.expiresAt)}
+                  </ThemedText>
                 )}
               </View>
 
@@ -248,35 +257,41 @@ export default function InvitationsScreen() {
                 const acting = actingKey === row.event_row_id;
 
                 return (
-                  <View key={row.event_row_id} style={styles.rowBlock}>
-                    <Field label="학교명" value={row.institution_name ?? '-'} />
-                    <Field label="주소" value={row.institution_address ?? '-'} />
-                    <Field label="일자/시간" value={formatTimeRange(row.start_time, row.end_time)} />
-                    <Field label="행사 구분" value={row.experience_type ?? '-'} />
+                  <View key={row.event_row_id} style={[styles.rowBlock, { borderTopColor: border }]}>
+                    <Field label="학교명" value={row.institution_name ?? '-'} textMuted={textMuted} />
+                    <Field label="주소" value={row.institution_address ?? '-'} textMuted={textMuted} />
+                    <Field
+                      label="일자/시간"
+                      value={formatTimeRange(row.start_time, row.end_time)}
+                      textMuted={textMuted}
+                    />
+                    <Field label="행사 구분" value={row.experience_type ?? '-'} textMuted={textMuted} />
                     <Field
                       label="프로그램"
                       value={row.unit_title ?? row.program_name ?? row.occupation_name ?? '-'}
+                      textMuted={textMuted}
                     />
                     <Field
                       label="강의료"
                       value={`${formatFee(row.lecture_fee)} (세후 ${formatFee(row.lecture_fee_after_tax)})`}
+                      textMuted={textMuted}
                     />
 
-                    {isTakenByMe && <ThemedText style={styles.takenMe}>✓ 수락 완료</ThemedText>}
+                    {isTakenByMe && (
+                      <ThemedText style={[styles.takenMe, { color: success }]}>✓ 수락 완료</ThemedText>
+                    )}
                     {isTakenByOther && (
-                      <ThemedText style={styles.takenOther}>다른 강사가 배정된 일정입니다</ThemedText>
+                      <ThemedText style={[styles.takenOther, { color: textMuted }]}>
+                        다른 강사가 배정된 일정입니다
+                      </ThemedText>
                     )}
                     {canAcceptRow && (
-                      <TouchableOpacity
-                        style={[styles.button, styles.acceptButton]}
-                        disabled={acting}
-                        onPress={() => acceptRow(group.invitationMentorId, row.event_row_id!)}>
-                        {acting ? (
-                          <ActivityIndicator color="#fff" />
-                        ) : (
-                          <ThemedText style={styles.buttonTextLight}>이 일정 수락</ThemedText>
-                        )}
-                      </TouchableOpacity>
+                      <Button
+                        title="이 일정 수락"
+                        size="sm"
+                        loading={acting}
+                        onPress={() => acceptRow(group.invitationMentorId, row.event_row_id!)}
+                      />
                     )}
                   </View>
                 );
@@ -284,32 +299,32 @@ export default function InvitationsScreen() {
 
               {isPending && group.isAllApprovalRequired && (
                 <View style={styles.actionRow}>
-                  <TouchableOpacity
-                    style={[styles.button, styles.acceptButton, styles.flex1]}
-                    disabled={actingKey === `${group.invitationMentorId}-all`}
-                    onPress={() => acceptAll(group.invitationMentorId)}>
-                    {actingKey === `${group.invitationMentorId}-all` ? (
-                      <ActivityIndicator color="#fff" />
-                    ) : (
-                      <ThemedText style={styles.buttonTextLight}>전체 수락</ThemedText>
-                    )}
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.button, styles.declineButton, styles.flex1]}
+                  <Button
+                    title="전체 수락"
+                    size="sm"
+                    style={styles.flex1}
+                    loading={actingKey === `${group.invitationMentorId}-all`}
+                    onPress={() => acceptAll(group.invitationMentorId)}
+                  />
+                  <Button
+                    title="거절"
+                    size="sm"
+                    variant="destructive"
+                    style={styles.flex1}
                     disabled={actingKey === `${group.invitationMentorId}-decline`}
-                    onPress={() => declineInvitation(group.invitationMentorId)}>
-                    <ThemedText style={styles.buttonTextDark}>거절</ThemedText>
-                  </TouchableOpacity>
+                    onPress={() => declineInvitation(group.invitationMentorId)}
+                  />
                 </View>
               )}
 
               {isPending && !group.isAllApprovalRequired && group.mentorStatus === '대기' && (
-                <TouchableOpacity
-                  style={[styles.button, styles.declineButton]}
+                <Button
+                  title="전체 거절"
+                  size="sm"
+                  variant="destructive"
                   disabled={actingKey === `${group.invitationMentorId}-decline`}
-                  onPress={() => declineInvitation(group.invitationMentorId)}>
-                  <ThemedText style={styles.buttonTextDark}>전체 거절</ThemedText>
-                </TouchableOpacity>
+                  onPress={() => declineInvitation(group.invitationMentorId)}
+                />
               )}
             </ThemedView>
           );
@@ -319,10 +334,10 @@ export default function InvitationsScreen() {
   );
 }
 
-function Field({ label, value }: { label: string; value: string }) {
+function Field({ label, value, textMuted }: { label: string; value: string; textMuted: string }) {
   return (
     <View style={styles.field}>
-      <ThemedText style={styles.fieldLabel}>{label}</ThemedText>
+      <ThemedText style={[styles.fieldLabel, { color: textMuted }]}>{label}</ThemedText>
       <ThemedText style={styles.fieldValue}>{value}</ThemedText>
     </View>
   );
@@ -333,31 +348,25 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listContent: {
-    padding: 16,
-    gap: 12,
+    padding: Spacing.md,
+    gap: Spacing.sm + 4,
   },
   header: {
-    marginBottom: 8,
-    gap: 4,
+    marginBottom: Spacing.xs,
+    gap: Spacing.xs,
   },
   centered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
+    padding: Spacing.lg,
   },
-  emptyText: {
-    color: '#687076',
-  },
-  errorText: {
-    color: '#c0392b',
-  },
+  emptyText: {},
+  errorText: {},
   card: {
-    borderWidth: 1,
-    borderColor: '#e2e2e2',
-    borderRadius: 12,
-    padding: 16,
-    gap: 12,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    gap: Spacing.sm + 4,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -366,21 +375,12 @@ const styles = StyleSheet.create({
   },
   badgeRow: {
     flexDirection: 'row',
-    gap: 6,
+    gap: Spacing.xs + 2,
   },
   badge: {
-    borderRadius: 999,
+    borderRadius: Radius.full,
     paddingVertical: 4,
-    paddingHorizontal: 10,
-  },
-  badgePending: {
-    backgroundColor: '#fff3e0',
-  },
-  badgeClosed: {
-    backgroundColor: '#eceff1',
-  },
-  badgeAll: {
-    backgroundColor: '#e3f2fd',
+    paddingHorizontal: Spacing.sm + 2,
   },
   badgeText: {
     fontSize: 12,
@@ -388,60 +388,35 @@ const styles = StyleSheet.create({
   },
   remaining: {
     fontSize: 12,
-    color: '#c77700',
   },
   rowBlock: {
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-    paddingTop: 12,
-    gap: 6,
+    paddingTop: Spacing.sm + 4,
+    gap: Spacing.xs + 2,
   },
   field: {
     flexDirection: 'row',
-    gap: 8,
+    gap: Spacing.sm,
   },
   fieldLabel: {
     width: 72,
     fontSize: 13,
-    color: '#687076',
   },
   fieldValue: {
     flex: 1,
     fontSize: 14,
   },
   takenMe: {
-    color: '#2e7d32',
     fontSize: 13,
   },
   takenOther: {
-    color: '#9e9e9e',
     fontSize: 13,
-  },
-  button: {
-    borderRadius: 8,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  acceptButton: {
-    backgroundColor: '#0a7ea4',
-  },
-  declineButton: {
-    borderWidth: 1,
-    borderColor: '#c0392b',
   },
   actionRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: Spacing.sm,
   },
   flex1: {
     flex: 1,
-  },
-  buttonTextLight: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  buttonTextDark: {
-    color: '#c0392b',
-    fontWeight: '600',
   },
 });

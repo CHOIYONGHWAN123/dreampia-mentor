@@ -5,9 +5,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { HtmlContent } from '@/components/html-content';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Radius, Shadows, Spacing } from '@/constants/theme';
+import { useThemeColor } from '@/hooks/use-theme-color';
 import { supabase } from '@/lib/supabase';
 
 export default function HomeScreen() {
+  const card = useThemeColor({}, 'card');
+  const danger = useThemeColor({}, 'danger');
+  const textMuted = useThemeColor({}, 'textMuted');
   const [contentHtml, setContentHtml] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,11 +51,11 @@ export default function HomeScreen() {
         <ThemedView style={styles.titleContainer}>
           <ThemedText type="title">회사 소개</ThemedText>
         </ThemedView>
-        <ThemedView style={styles.contentContainer}>
+        <ThemedView style={[styles.card, { backgroundColor: card, boxShadow: Shadows.card }]}>
           {loading && <ActivityIndicator />}
-          {!loading && error && <ThemedText>{error}</ThemedText>}
+          {!loading && error && <ThemedText style={{ color: danger }}>{error}</ThemedText>}
           {!loading && !error && !contentHtml && (
-            <ThemedText>등록된 회사 소개가 없습니다.</ThemedText>
+            <ThemedText style={{ color: textMuted }}>등록된 회사 소개가 없습니다.</ThemedText>
           )}
           {!loading && !error && contentHtml && <HtmlContent contentHtml={contentHtml} />}
         </ThemedView>
@@ -64,15 +69,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 32,
-    gap: 16,
+    padding: Spacing.lg,
+    gap: Spacing.md,
   },
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: Spacing.sm,
   },
-  contentContainer: {
-    gap: 8,
+  card: {
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
   },
 });

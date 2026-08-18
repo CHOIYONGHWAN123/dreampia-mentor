@@ -1,16 +1,11 @@
 import { Link, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
+import { Modal, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AuthScreen } from '@/components/auth-screen';
 import { AuthTextField } from '@/components/auth-text-field';
+import { Button } from '@/components/button';
 import { HtmlContent } from '@/components/html-content';
 import {
   IdentityVerificationModal,
@@ -19,7 +14,9 @@ import {
 } from '@/components/identity-verification-modal';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Radius, Shadows, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/auth-context';
+import { useThemeColor } from '@/hooks/use-theme-color';
 import { supabase } from '@/lib/supabase';
 
 type VerifiedIdentity = { name: string; phone: string; ci: string | null };
@@ -31,10 +28,19 @@ type Terms = {
 };
 
 function Checkbox({ checked, onPress, label }: { checked: boolean; onPress: () => void; label: string }) {
+  const primary = useThemeColor({}, 'primary');
+  const onPrimary = useThemeColor({}, 'onPrimary');
+  const border = useThemeColor({}, 'border');
+
   return (
     <TouchableOpacity style={styles.checkboxRow} onPress={onPress} activeOpacity={0.7}>
-      <ThemedView style={[styles.checkbox, checked && styles.checkboxChecked]}>
-        {checked && <ThemedText style={styles.checkboxMark}>✓</ThemedText>}
+      <ThemedView
+        style={[
+          styles.checkbox,
+          { borderColor: checked ? primary : border },
+          checked && { backgroundColor: primary },
+        ]}>
+        {checked && <ThemedText style={[styles.checkboxMark, { color: onPrimary }]}>✓</ThemedText>}
       </ThemedView>
       <ThemedText style={styles.checkboxLabel}>{label}</ThemedText>
     </TouchableOpacity>
@@ -44,6 +50,10 @@ function Checkbox({ checked, onPress, label }: { checked: boolean; onPress: () =
 export default function SignupScreen() {
   const { signUp } = useAuth();
   const router = useRouter();
+  const border = useThemeColor({}, 'border');
+  const danger = useThemeColor({}, 'danger');
+  const textMuted = useThemeColor({}, 'textMuted');
+  const card = useThemeColor({}, 'card');
 
   const [verified, setVerified] = useState<VerifiedIdentity | null>(null);
   const [verifyModalVisible, setVerifyModalVisible] = useState(false);
@@ -143,125 +153,114 @@ export default function SignupScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.select({ ios: 'padding', default: undefined })}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <ThemedText type="title" style={styles.title}>
-            멘토 회원가입
-          </ThemedText>
-
-          <ThemedView style={styles.form}>
-            {isIdentityVerificationEnabled ? (
-              <ThemedView style={styles.field}>
-                <ThemedText style={styles.label}>본인인증</ThemedText>
-                {verified ? (
-                  <ThemedView style={styles.verifiedBox}>
-                    <ThemedView>
-                      <ThemedText type="defaultSemiBold">{verified.name}</ThemedText>
-                      <ThemedText style={styles.verifiedPhone}>{verified.phone}</ThemedText>
-                    </ThemedView>
-                    <TouchableOpacity onPress={() => setVerifyModalVisible(true)}>
-                      <ThemedText type="link">다시 인증하기</ThemedText>
-                    </TouchableOpacity>
+    <>
+      <AuthScreen title="멘토 회원가입" subtitle="진로 수업 강사 전용">
+        <ThemedView style={[styles.card, { backgroundColor: card, boxShadow: Shadows.raised }]}>
+          {isIdentityVerificationEnabled ? (
+            <ThemedView style={styles.field}>
+              <ThemedText style={[styles.label, { color: textMuted }]}>본인인증</ThemedText>
+              {verified ? (
+                <ThemedView style={[styles.verifiedBox, { borderColor: border }]}>
+                  <ThemedView>
+                    <ThemedText type="defaultSemiBold">{verified.name}</ThemedText>
+                    <ThemedText style={[styles.verifiedPhone, { color: textMuted }]}>
+                      {verified.phone}
+                    </ThemedText>
                   </ThemedView>
-                ) : (
-                  <TouchableOpacity style={styles.verifyButton} onPress={() => setVerifyModalVisible(true)}>
-                    <ThemedText style={styles.verifyButtonText}>본인인증하기</ThemedText>
+                  <TouchableOpacity onPress={() => setVerifyModalVisible(true)}>
+                    <ThemedText type="link">다시 인증하기</ThemedText>
                   </TouchableOpacity>
-                )}
-              </ThemedView>
-            ) : (
-              <>
-                <AuthTextField
-                  label="이름"
-                  value={manualName}
-                  onChangeText={setManualName}
-                  placeholder="홍길동"
-                  autoComplete="name"
+                </ThemedView>
+              ) : (
+                <Button
+                  title="본인인증하기"
+                  variant="secondary"
+                  onPress={() => setVerifyModalVisible(true)}
                 />
-                <AuthTextField
-                  label="전화번호"
-                  value={manualPhone}
-                  onChangeText={setManualPhone}
-                  placeholder="010-0000-0000"
-                  keyboardType="phone-pad"
-                  autoComplete="tel"
-                />
-              </>
-            )}
-            <AuthTextField
-              label="이메일"
-              value={email}
-              onChangeText={setEmail}
-              placeholder="mentor@example.com"
-              keyboardType="email-address"
-              autoComplete="email"
-            />
-            <AuthTextField
-              label="비밀번호"
-              value={password}
-              onChangeText={setPassword}
-              placeholder="6자 이상"
-              secureTextEntry
-              autoComplete="new-password"
-            />
-            <AuthTextField
-              label="비밀번호 확인"
-              value={passwordConfirm}
-              onChangeText={setPasswordConfirm}
-              placeholder="비밀번호 재입력"
-              secureTextEntry
-              autoComplete="new-password"
-            />
-
-            <ThemedView style={styles.termsContainer}>
-              <ThemedView style={styles.termsRow}>
-                <Checkbox
-                  checked={agreedService}
-                  onPress={() => setAgreedService((v) => !v)}
-                  label="[필수] 서비스 이용약관 동의"
-                />
-                <TouchableOpacity onPress={() => setModalField('service_terms')}>
-                  <ThemedText type="link">보기</ThemedText>
-                </TouchableOpacity>
-              </ThemedView>
-              <ThemedView style={styles.termsRow}>
-                <Checkbox
-                  checked={agreedPrivacy}
-                  onPress={() => setAgreedPrivacy((v) => !v)}
-                  label="[필수] 개인정보처리방침 동의"
-                />
-                <TouchableOpacity onPress={() => setModalField('privacy_policy')}>
-                  <ThemedText type="link">보기</ThemedText>
-                </TouchableOpacity>
-              </ThemedView>
+              )}
             </ThemedView>
+          ) : (
+            <>
+              <AuthTextField
+                label="이름"
+                value={manualName}
+                onChangeText={setManualName}
+                placeholder="홍길동"
+                autoComplete="name"
+              />
+              <AuthTextField
+                label="전화번호"
+                value={manualPhone}
+                onChangeText={setManualPhone}
+                placeholder="010-0000-0000"
+                keyboardType="phone-pad"
+                autoComplete="tel"
+              />
+            </>
+          )}
+          <AuthTextField
+            label="이메일"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="mentor@example.com"
+            keyboardType="email-address"
+            autoComplete="email"
+          />
+          <AuthTextField
+            label="비밀번호"
+            value={password}
+            onChangeText={setPassword}
+            placeholder="6자 이상"
+            secureTextEntry
+            autoComplete="new-password"
+          />
+          <AuthTextField
+            label="비밀번호 확인"
+            value={passwordConfirm}
+            onChangeText={setPasswordConfirm}
+            placeholder="비밀번호 재입력"
+            secureTextEntry
+            autoComplete="new-password"
+          />
 
-            {error && <ThemedText style={styles.error}>{error}</ThemedText>}
-
-            <TouchableOpacity
-              style={[styles.button, submitting && styles.buttonDisabled]}
-              onPress={handleSubmit}
-              disabled={submitting}>
-              <ThemedText style={styles.buttonText}>
-                {submitting ? '가입 처리 중...' : '회원가입'}
-              </ThemedText>
-            </TouchableOpacity>
+          <ThemedView style={styles.termsContainer}>
+            <ThemedView style={styles.termsRow}>
+              <Checkbox
+                checked={agreedService}
+                onPress={() => setAgreedService((v) => !v)}
+                label="[필수] 서비스 이용약관 동의"
+              />
+              <TouchableOpacity onPress={() => setModalField('service_terms')}>
+                <ThemedText type="link">보기</ThemedText>
+              </TouchableOpacity>
+            </ThemedView>
+            <ThemedView style={styles.termsRow}>
+              <Checkbox
+                checked={agreedPrivacy}
+                onPress={() => setAgreedPrivacy((v) => !v)}
+                label="[필수] 개인정보처리방침 동의"
+              />
+              <TouchableOpacity onPress={() => setModalField('privacy_policy')}>
+                <ThemedText type="link">보기</ThemedText>
+              </TouchableOpacity>
+            </ThemedView>
           </ThemedView>
 
-          <ThemedView style={styles.footer}>
-            <ThemedText>이미 계정이 있으신가요?</ThemedText>
-            <Link href="/login">
-              <ThemedText type="link">로그인</ThemedText>
-            </Link>
-          </ThemedView>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          {error && <ThemedText style={[styles.error, { color: danger }]}>{error}</ThemedText>}
+
+          <Button title="회원가입" onPress={handleSubmit} loading={submitting} style={styles.button} />
+        </ThemedView>
+
+        <ThemedView style={styles.footer}>
+          <ThemedText>이미 계정이 있으신가요?</ThemedText>
+          <Link href="/login">
+            <ThemedText type="link">로그인</ThemedText>
+          </Link>
+        </ThemedView>
+      </AuthScreen>
 
       <Modal visible={modalField !== null} animationType="slide" onRequestClose={() => setModalField(null)}>
-        <SafeAreaView style={styles.safeArea}>
+        <SafeAreaView style={styles.modalSafeArea}>
           <ThemedView style={styles.modalHeader}>
             <ThemedText type="subtitle">
               {modalField === 'service_terms' ? '서비스 이용약관' : '개인정보처리방침'}
@@ -281,92 +280,65 @@ export default function SignupScreen() {
         onClose={() => setVerifyModalVisible(false)}
         onResult={handleVerifyResult}
       />
-    </SafeAreaView>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  modalSafeArea: {
     flex: 1,
   },
-  flex: {
-    flex: 1,
-  },
-  content: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: 24,
-    gap: 24,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  form: {
-    gap: 16,
+  card: {
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
+    gap: Spacing.md,
   },
   field: {
-    gap: 6,
+    gap: Spacing.xs + 2,
   },
   label: {
     fontSize: 13,
-    opacity: 0.7,
-  },
-  verifyButton: {
-    borderWidth: 1,
-    borderColor: '#0a7ea4',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  verifyButtonText: {
-    color: '#0a7ea4',
-    fontWeight: '600',
+    fontWeight: '500',
   },
   verifiedBox: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm + 2,
   },
   verifiedPhone: {
     fontSize: 13,
-    opacity: 0.7,
     marginTop: 2,
   },
   termsContainer: {
-    gap: 8,
-    marginTop: 4,
+    gap: Spacing.sm,
+    marginTop: Spacing.xs,
+    backgroundColor: 'transparent',
   },
   termsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    backgroundColor: 'transparent',
   },
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: Spacing.sm,
     flexShrink: 1,
   },
   checkbox: {
     width: 20,
     height: 20,
-    borderRadius: 4,
+    borderRadius: Radius.sm - 4,
     borderWidth: 1.5,
-    borderColor: '#999',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkboxChecked: {
-    backgroundColor: '#0a7ea4',
-    borderColor: '#0a7ea4',
-  },
   checkboxMark: {
-    color: '#fff',
     fontSize: 13,
     lineHeight: 15,
   },
@@ -375,37 +347,25 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   button: {
-    backgroundColor: '#0a7ea4',
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    marginTop: Spacing.xs,
   },
   error: {
-    color: '#d32f2f',
     fontSize: 13,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 6,
+    gap: Spacing.xs + 2,
+    backgroundColor: 'transparent',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingHorizontal: Spacing.lg - 4,
+    paddingVertical: Spacing.sm + 4,
   },
   modalContent: {
-    padding: 20,
+    padding: Spacing.lg - 4,
   },
 });

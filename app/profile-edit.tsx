@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AgreementSignature } from '@/components/agreement-signature';
 import { AreaSelector } from '@/components/area-selector';
 import { AuthTextField } from '@/components/auth-text-field';
+import { Button } from '@/components/button';
 import { DaumAddressSearch } from '@/components/daum-address-search';
 import { FieldSectionForm } from '@/components/field-section-form';
 import { MentorCodeSearch } from '@/components/mentor-code-search';
@@ -22,7 +23,9 @@ import { SelectField } from '@/components/select-field';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BANK_OPTIONS } from '@/constants/banks';
+import { Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/auth-context';
+import { useThemeColor } from '@/hooks/use-theme-color';
 import {
   buildFieldSectionsFromExisting,
   createFieldSection,
@@ -39,6 +42,10 @@ export default function ProfileEditScreen() {
   const { session } = useAuth();
   const selfId = session!.user.id;
   const { catalog, loading: catalogLoading } = useProgramCatalog();
+  const surface = useThemeColor({}, 'surface');
+  const textMuted = useThemeColor({}, 'textMuted');
+  const border = useThemeColor({}, 'border');
+  const danger = useThemeColor({}, 'danger');
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -273,7 +280,7 @@ export default function ProfileEditScreen() {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.centered}>
-          <ThemedText style={styles.error}>{loadError}</ThemedText>
+          <ThemedText style={[styles.error, { color: danger }]}>{loadError}</ThemedText>
         </View>
       </SafeAreaView>
     );
@@ -286,12 +293,12 @@ export default function ProfileEditScreen() {
         behavior={Platform.select({ ios: 'padding', default: undefined })}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <ThemedText type="title">회원정보 수정</ThemedText>
-          <ThemedText style={styles.description}>
+          <ThemedText style={[styles.description, { color: textMuted }]}>
             회원가입 및 추가 정보 제출 시 입력했던 내용을 확인하고 수정할 수 있습니다.
           </ThemedText>
 
           <ThemedView style={styles.field}>
-            <ThemedText style={styles.label}>이메일 (로그인 ID)</ThemedText>
+            <ThemedText style={[styles.label, { color: textMuted }]}>이메일 (로그인 ID)</ThemedText>
             <AuthTextField value={session?.user.email ?? ''} editable={false} />
           </ThemedView>
 
@@ -312,10 +319,12 @@ export default function ProfileEditScreen() {
           />
 
           <ThemedView style={styles.field}>
-            <ThemedText style={styles.label}>주소</ThemedText>
+            <ThemedText style={[styles.label, { color: textMuted }]}>주소</ThemedText>
             <TouchableOpacity onPress={() => setAddressSearchVisible(true)}>
-              <ThemedView style={styles.addressField} pointerEvents="none">
-                <ThemedText style={address ? undefined : styles.placeholder}>
+              <ThemedView
+                style={[styles.addressField, { backgroundColor: surface }]}
+                pointerEvents="none">
+                <ThemedText style={address ? undefined : { color: textMuted }}>
                   {address || '주소 검색'}
                 </ThemedText>
               </ThemedView>
@@ -328,7 +337,7 @@ export default function ProfileEditScreen() {
           </ThemedView>
 
           <ThemedView style={styles.field}>
-            <ThemedText style={styles.label}>계좌번호</ThemedText>
+            <ThemedText style={[styles.label, { color: textMuted }]}>계좌번호</ThemedText>
             <ThemedView style={styles.bankRow}>
               <ThemedView style={styles.bankSelect}>
                 <SelectField
@@ -351,7 +360,7 @@ export default function ProfileEditScreen() {
           </ThemedView>
 
           <ThemedView style={styles.field}>
-            <ThemedText style={styles.label}>소속 강사 (선택)</ThemedText>
+            <ThemedText style={[styles.label, { color: textMuted }]}>소속 강사 (선택)</ThemedText>
             <MentorCodeSearch
               value={belongsToId}
               displayName={belongsToName}
@@ -363,7 +372,7 @@ export default function ProfileEditScreen() {
           </ThemedView>
 
           <ThemedView style={styles.field}>
-            <ThemedText style={styles.label}>동의서</ThemedText>
+            <ThemedText style={[styles.label, { color: textMuted }]}>동의서</ThemedText>
             <AgreementSignature
               signature={signature}
               onChange={setSignature}
@@ -372,7 +381,7 @@ export default function ProfileEditScreen() {
           </ThemedView>
 
           <ThemedView style={styles.field}>
-            <ThemedText style={styles.label}>출강 가능 지역</ThemedText>
+            <ThemedText style={[styles.label, { color: textMuted }]}>출강 가능 지역</ThemedText>
             <AreaSelector value={availableAreas} onChange={setAvailableAreas} />
           </ThemedView>
 
@@ -401,9 +410,11 @@ export default function ProfileEditScreen() {
             </TouchableOpacity>
           </ThemedView>
 
-          <ThemedView style={styles.passwordSection}>
+          <ThemedView style={[styles.passwordSection, { borderTopColor: border }]}>
             <ThemedText type="subtitle">비밀번호 변경 (선택)</ThemedText>
-            <ThemedText style={styles.description}>변경하지 않으려면 비워두세요.</ThemedText>
+            <ThemedText style={[styles.description, { color: textMuted }]}>
+              변경하지 않으려면 비워두세요.
+            </ThemedText>
             <AuthTextField
               label="새 비밀번호"
               value={newPassword}
@@ -422,14 +433,9 @@ export default function ProfileEditScreen() {
             />
           </ThemedView>
 
-          {error && <ThemedText style={styles.error}>{error}</ThemedText>}
+          {error && <ThemedText style={[styles.error, { color: danger }]}>{error}</ThemedText>}
 
-          <TouchableOpacity
-            style={[styles.button, submitting && styles.buttonDisabled]}
-            onPress={handleSubmit}
-            disabled={submitting}>
-            <ThemedText style={styles.buttonText}>{submitting ? '저장 중...' : '저장'}</ThemedText>
-          </TouchableOpacity>
+          <Button title="저장" onPress={handleSubmit} loading={submitting} style={styles.button} />
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -450,8 +456,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 24,
-    gap: 16,
+    padding: Spacing.lg,
+    gap: Spacing.md,
   },
   centered: {
     flex: 1,
@@ -459,29 +465,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   description: {
-    opacity: 0.7,
-    marginBottom: 4,
+    marginBottom: Spacing.xs,
   },
   field: {
-    gap: 6,
+    gap: Spacing.xs + 2,
   },
   label: {
     fontSize: 13,
-    opacity: 0.7,
-  },
-  placeholder: {
-    opacity: 0.5,
+    fontWeight: '500',
   },
   addressField: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm + 2,
   },
   bankRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: Spacing.sm,
   },
   bankSelect: {
     width: 140,
@@ -490,33 +490,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   programsSection: {
-    gap: 12,
-    marginTop: 8,
+    gap: Spacing.sm + 4,
+    marginTop: Spacing.xs,
   },
   passwordSection: {
-    gap: 12,
-    marginTop: 8,
+    gap: Spacing.sm + 4,
+    marginTop: Spacing.xs,
     borderTopWidth: 1,
-    borderTopColor: '#e2e2e2',
-    paddingTop: 16,
+    paddingTop: Spacing.md,
   },
   error: {
-    color: '#d32f2f',
     fontSize: 13,
   },
   button: {
-    backgroundColor: '#0a7ea4',
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    marginTop: Spacing.xs,
   },
 });
