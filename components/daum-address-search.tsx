@@ -5,8 +5,12 @@ import WebView from 'react-native-webview';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { DAUM_POSTCODE_SCRIPT } from '@/lib/daum-postcode-script';
 import { loadDaumPostcodeScript } from '@/lib/daum-postcode-web';
 
+// 스크립트를 <script src="https://...">로 실시간 로드하지 않고, 빌드에 내장된 소스를
+// 그대로 인라인한다 (App Store 심사가 "원격에서 코드를 받아 실행"하는 패턴으로 자동
+// 탐지하는 문제 회피용 — lib/daum-postcode-script.ts 참고).
 const NATIVE_HTML = `
   <!DOCTYPE html>
   <html>
@@ -18,7 +22,7 @@ const NATIVE_HTML = `
     </head>
     <body>
       <div id="wrap"></div>
-      <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+      <script>${DAUM_POSTCODE_SCRIPT}</script>
       <script>
         new daum.Postcode({
           oncomplete: function (data) {
