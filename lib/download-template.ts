@@ -33,3 +33,31 @@ export async function downloadTemplate(assetModule: number, filename: string) {
     await Sharing.shareAsync(destination.uri);
   }
 }
+
+// 원격 URL(Supabase Storage 등)에 있는 양식 파일을 다운로드/공유한다.
+// 프로그램 유닛별 PPT 양식처럼 관리자가 업로드해서 매번 바뀔 수 있는 파일용.
+export async function downloadTemplateFromUrl(url: string, filename: string) {
+  if (Platform.OS === 'web') {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(blobUrl);
+    return;
+  }
+
+  const destination = new File(Paths.cache, filename);
+  if (destination.exists) {
+    destination.delete();
+  }
+  await File.downloadFileAsync(url, destination);
+
+  if (await Sharing.isAvailableAsync()) {
+    await Sharing.shareAsync(destination.uri);
+  }
+}

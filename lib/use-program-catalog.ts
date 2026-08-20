@@ -30,7 +30,7 @@ export function useProgramCatalog() {
       supabase.from('occupation_programs').select('id, name, occupation_id').order('name'),
       supabase
         .from('occupation_program_unit')
-        .select('id, title, occupation_programs_id, school_level')
+        .select('id, title, occupation_programs_id, school_level, ppt_templates(file_url)')
         .order('title'),
     ]).then(([fieldsRes, occsRes, progsRes, unitsRes]) => {
       if (isCancelled) return;
@@ -38,7 +38,13 @@ export function useProgramCatalog() {
         fields: fieldsRes.data ?? [],
         occupations: occsRes.data ?? [],
         programs: progsRes.data ?? [],
-        units: unitsRes.data ?? [],
+        units: (unitsRes.data ?? []).map((u) => ({
+          id: u.id,
+          title: u.title,
+          occupation_programs_id: u.occupation_programs_id,
+          school_level: u.school_level,
+          ppt_template_url: u.ppt_templates?.file_url ?? null,
+        })),
       });
       setLoading(false);
     });

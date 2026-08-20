@@ -3,7 +3,7 @@ import { Linking, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { downloadTemplate } from '@/lib/download-template';
+import { downloadTemplate, downloadTemplateFromUrl } from '@/lib/download-template';
 import type { PickedFile } from '@/lib/upload-file';
 
 export function FilePicker({
@@ -12,6 +12,7 @@ export function FilePicker({
   onChange,
   mimeTypes = ['*/*'],
   templateAsset,
+  templateUrl,
   templateFilename,
 }: {
   file: PickedFile | null;
@@ -19,7 +20,10 @@ export function FilePicker({
   existingFileUrl?: string | null;
   onChange: (file: PickedFile | null) => void;
   mimeTypes?: string[];
+  // 앱에 번들된 정적 양식(예: 프로필 양식 — 전체 공용, require()로 참조).
   templateAsset?: number;
+  // 관리자가 올려둔 원격 양식(예: 프로그램 유닛별 PPT 양식 — Supabase Storage URL).
+  templateUrl?: string | null;
   templateFilename?: string;
 }) {
   const handlePick = async () => {
@@ -36,6 +40,13 @@ export function FilePicker({
     <ThemedView style={styles.container}>
       {templateAsset && templateFilename && (
         <TouchableOpacity onPress={() => downloadTemplate(templateAsset, templateFilename)}>
+          <ThemedText type="link" style={styles.templateLink}>
+            양식 다운로드
+          </ThemedText>
+        </TouchableOpacity>
+      )}
+      {templateUrl && templateFilename && (
+        <TouchableOpacity onPress={() => downloadTemplateFromUrl(templateUrl, templateFilename)}>
           <ThemedText type="link" style={styles.templateLink}>
             양식 다운로드
           </ThemedText>

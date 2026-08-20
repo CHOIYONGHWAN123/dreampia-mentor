@@ -1213,6 +1213,7 @@ export type Database = {
           is_delivery_available: boolean
           mentor_material_cost: number | null
           occupation_programs_id: string | null
+          ppt_template_id: string | null
           prep_by: Database["public"]["Enums"]["prep_by"] | null
           school_level: Database["public"]["Enums"]["school_level"] | null
           school_request_note: string | null
@@ -1228,6 +1229,7 @@ export type Database = {
           is_delivery_available?: boolean
           mentor_material_cost?: number | null
           occupation_programs_id?: string | null
+          ppt_template_id?: string | null
           prep_by?: Database["public"]["Enums"]["prep_by"] | null
           school_level?: Database["public"]["Enums"]["school_level"] | null
           school_request_note?: string | null
@@ -1243,6 +1245,7 @@ export type Database = {
           is_delivery_available?: boolean
           mentor_material_cost?: number | null
           occupation_programs_id?: string | null
+          ppt_template_id?: string | null
           prep_by?: Database["public"]["Enums"]["prep_by"] | null
           school_level?: Database["public"]["Enums"]["school_level"] | null
           school_request_note?: string | null
@@ -1255,6 +1258,13 @@ export type Database = {
             columns: ["occupation_programs_id"]
             isOneToOne: false
             referencedRelation: "occupation_programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "occupation_program_unit_ppt_template_id_fkey"
+            columns: ["ppt_template_id"]
+            isOneToOne: false
+            referencedRelation: "ppt_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -1310,6 +1320,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ppt_templates: {
+        Row: {
+          created_at: string
+          file_url: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          file_url: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          file_url?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
       }
       push_notifications: {
         Row: {

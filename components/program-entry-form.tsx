@@ -62,6 +62,7 @@ export function ProgramEntryForm({
 
       <LevelFileInputs
         levels={entry.selection.levels}
+        units={units}
         pptFiles={entry.pptFiles}
         profileFiles={entry.profileFiles}
         existingPptFileUrls={entry.existingPptFileUrls}
