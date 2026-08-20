@@ -1,18 +1,13 @@
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AgreementSignature } from '@/components/agreement-signature';
 import { AreaSelector } from '@/components/area-selector';
+import { AuthScreen } from '@/components/auth-screen';
 import { AuthTextField } from '@/components/auth-text-field';
+import { Button } from '@/components/button';
 import { DaumAddressSearch } from '@/components/daum-address-search';
 import { FieldSectionForm } from '@/components/field-section-form';
 import { MentorCodeSearch } from '@/components/mentor-code-search';
@@ -20,7 +15,9 @@ import { SelectField } from '@/components/select-field';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BANK_OPTIONS } from '@/constants/banks';
+import { Radius, Shadows, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/auth-context';
+import { useThemeColor } from '@/hooks/use-theme-color';
 import { createFieldSection, type FieldSectionState } from '@/lib/mentor-profile-types';
 import { signAgreement } from '@/lib/sign-agreement';
 import { supabase } from '@/lib/supabase';
@@ -32,6 +29,10 @@ export default function ProfileSetupScreen() {
   const { session } = useAuth();
   const selfId = session!.user.id;
   const { catalog, loading: catalogLoading } = useProgramCatalog();
+  const card = useThemeColor({}, 'card');
+  const surface = useThemeColor({}, 'surface');
+  const textMuted = useThemeColor({}, 'textMuted');
+  const danger = useThemeColor({}, 'danger');
 
   const [idNumber, setIdNumber] = useState('');
   const [address, setAddress] = useState('');
@@ -155,182 +156,145 @@ export default function ProfileSetupScreen() {
 
   if (success) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.successContainer}>
-          <ThemedText type="title" style={styles.successTitle}>
-            제출 완료
-          </ThemedText>
+      <AuthScreen title="제출 완료" subtitle="관리자 승인을 기다려주세요">
+        <ThemedView style={[styles.card, styles.successCard, { backgroundColor: card, boxShadow: Shadows.raised }]}>
           <ThemedText style={styles.successText}>
             추가 정보가 등록되었습니다.{'\n'}관리자 승인을 기다려주세요.
           </ThemedText>
-          <TouchableOpacity style={[styles.button, styles.successButton]} onPress={() => router.back()}>
-            <ThemedText style={styles.buttonText}>확인</ThemedText>
-          </TouchableOpacity>
+          <Button title="확인" onPress={() => router.back()} style={styles.successButton} />
         </ThemedView>
-      </SafeAreaView>
+      </AuthScreen>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.select({ ios: 'padding', default: undefined })}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <ThemedText type="title">추가 정보 입력</ThemedText>
-          <ThemedText style={styles.description}>
-            관리자 승인 및 강사료 정산을 위해 아래 정보를 입력해주세요.
-          </ThemedText>
+    <AuthScreen title="추가 정보 입력" subtitle="관리자 승인 및 강사료 정산을 위해 필요해요">
+      <ThemedView style={[styles.card, { backgroundColor: card, boxShadow: Shadows.raised }]}>
+        <AuthTextField label="주민번호" value={idNumber} onChangeText={setIdNumber} placeholder="000000-0000000" />
 
-          <AuthTextField label="주민번호" value={idNumber} onChangeText={setIdNumber} placeholder="000000-0000000" />
+        <ThemedView style={styles.field}>
+          <ThemedText style={[styles.label, { color: textMuted }]}>주소</ThemedText>
+          <TouchableOpacity onPress={() => setAddressSearchVisible(true)}>
+            <ThemedView style={[styles.addressField, { backgroundColor: surface }]} pointerEvents="none">
+              <ThemedText style={address ? undefined : { color: textMuted }}>
+                {address || '주소 검색'}
+              </ThemedText>
+            </ThemedView>
+          </TouchableOpacity>
+          <AuthTextField value={detailAddress} onChangeText={setDetailAddress} placeholder="상세 주소" />
+        </ThemedView>
 
-          <ThemedView style={styles.field}>
-            <ThemedText style={styles.label}>주소</ThemedText>
-            <TouchableOpacity onPress={() => setAddressSearchVisible(true)}>
-              <ThemedView style={styles.addressField} pointerEvents="none">
-                <ThemedText style={address ? undefined : styles.placeholder}>
-                  {address || '주소 검색'}
-                </ThemedText>
-              </ThemedView>
-            </TouchableOpacity>
-            <AuthTextField
-              value={detailAddress}
-              onChangeText={setDetailAddress}
-              placeholder="상세 주소"
-            />
-          </ThemedView>
-
-          <ThemedView style={styles.field}>
-            <ThemedText style={styles.label}>계좌번호</ThemedText>
-            <ThemedView style={styles.bankRow}>
-              <ThemedView style={styles.bankSelect}>
-                <SelectField
-                  title="은행 선택"
-                  value={bankName}
-                  options={BANK_OPTIONS.map((b) => ({ id: b, label: b }))}
-                  onChange={setBankName}
-                  placeholder="은행 선택"
-                />
-              </ThemedView>
-              <ThemedView style={styles.bankNumber}>
-                <AuthTextField
-                  value={bankAccountNumber}
-                  onChangeText={setBankAccountNumber}
-                  placeholder="계좌번호"
-                  keyboardType="number-pad"
-                />
-              </ThemedView>
+        <ThemedView style={styles.field}>
+          <ThemedText style={[styles.label, { color: textMuted }]}>계좌번호</ThemedText>
+          <ThemedView style={styles.bankRow}>
+            <ThemedView style={styles.bankSelect}>
+              <SelectField
+                title="은행 선택"
+                value={bankName}
+                options={BANK_OPTIONS.map((b) => ({ id: b, label: b }))}
+                onChange={setBankName}
+                placeholder="은행 선택"
+              />
+            </ThemedView>
+            <ThemedView style={styles.bankNumber}>
+              <AuthTextField
+                value={bankAccountNumber}
+                onChangeText={setBankAccountNumber}
+                placeholder="계좌번호"
+                keyboardType="number-pad"
+              />
             </ThemedView>
           </ThemedView>
+        </ThemedView>
 
-          <ThemedView style={styles.field}>
-            <ThemedText style={styles.label}>소속 강사 (선택)</ThemedText>
-            <MentorCodeSearch
-              value={belongsToId}
-              displayName={belongsToName}
-              onChange={(id, name) => {
-                setBelongsToId(id);
-                setBelongsToName(name);
-              }}
-            />
-          </ThemedView>
+        <ThemedView style={styles.field}>
+          <ThemedText style={[styles.label, { color: textMuted }]}>소속 강사 (선택)</ThemedText>
+          <MentorCodeSearch
+            value={belongsToId}
+            displayName={belongsToName}
+            onChange={(id, name) => {
+              setBelongsToId(id);
+              setBelongsToName(name);
+            }}
+          />
+        </ThemedView>
 
-          <ThemedView style={styles.field}>
-            <ThemedText style={styles.label}>동의서</ThemedText>
-            <AgreementSignature signature={signature} onChange={setSignature} />
-          </ThemedView>
+        <ThemedView style={styles.field}>
+          <ThemedText style={[styles.label, { color: textMuted }]}>동의서</ThemedText>
+          <AgreementSignature signature={signature} onChange={setSignature} />
+        </ThemedView>
 
-          <ThemedView style={styles.field}>
-            <ThemedText style={styles.label}>출강 가능 지역</ThemedText>
-            <AreaSelector value={availableAreas} onChange={setAvailableAreas} />
-          </ThemedView>
+        <ThemedView style={styles.field}>
+          <ThemedText style={[styles.label, { color: textMuted }]}>출강 가능 지역</ThemedText>
+          <AreaSelector value={availableAreas} onChange={setAvailableAreas} />
+        </ThemedView>
 
-          <ThemedView style={styles.programsSection}>
-            <ThemedText type="subtitle">프로그램 (선택)</ThemedText>
-            {catalogLoading ? (
-              <ActivityIndicator />
-            ) : (
-              <>
-                {fieldSections.map((section) => (
-                  <FieldSectionForm
-                    key={section.key}
-                    section={section}
-                    fields={catalog.fields}
-                    occupations={catalog.occupations}
-                    programs={catalog.programs}
-                    units={catalog.units}
-                    globalExcludedUnitIds={globalExcludedUnitIds}
-                    selfId={selfId}
-                    onChange={updateSection}
-                    onRemove={
-                      fieldSections.length > 1
-                        ? () => setFieldSections((prev) => prev.filter((s) => s.key !== section.key))
-                        : undefined
-                    }
-                  />
-                ))}
-                <TouchableOpacity onPress={() => setFieldSections((prev) => [...prev, createFieldSection()])}>
-                  <ThemedText type="link">+ 분야 추가</ThemedText>
-                </TouchableOpacity>
-              </>
-            )}
-          </ThemedView>
+        <ThemedView style={styles.programsSection}>
+          <ThemedText type="subtitle">프로그램 (선택)</ThemedText>
+          {catalogLoading ? (
+            <ActivityIndicator />
+          ) : (
+            <>
+              {fieldSections.map((section) => (
+                <FieldSectionForm
+                  key={section.key}
+                  section={section}
+                  fields={catalog.fields}
+                  occupations={catalog.occupations}
+                  programs={catalog.programs}
+                  units={catalog.units}
+                  globalExcludedUnitIds={globalExcludedUnitIds}
+                  selfId={selfId}
+                  onChange={updateSection}
+                  onRemove={
+                    fieldSections.length > 1
+                      ? () => setFieldSections((prev) => prev.filter((s) => s.key !== section.key))
+                      : undefined
+                  }
+                />
+              ))}
+              <TouchableOpacity onPress={() => setFieldSections((prev) => [...prev, createFieldSection()])}>
+                <ThemedText type="link">+ 분야 추가</ThemedText>
+              </TouchableOpacity>
+            </>
+          )}
+        </ThemedView>
 
-          {error && <ThemedText style={styles.error}>{error}</ThemedText>}
+        {error && <ThemedText style={[styles.error, { color: danger }]}>{error}</ThemedText>}
 
-          <TouchableOpacity
-            style={[styles.button, submitting && styles.buttonDisabled]}
-            onPress={handleSubmit}
-            disabled={submitting}>
-            <ThemedText style={styles.buttonText}>{submitting ? '저장 중...' : '저장'}</ThemedText>
-          </TouchableOpacity>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        <Button title="저장" onPress={handleSubmit} loading={submitting} style={styles.button} />
+      </ThemedView>
 
       <DaumAddressSearch
         visible={addressSearchVisible}
         onClose={() => setAddressSearchVisible(false)}
         onSelect={setAddress}
       />
-    </SafeAreaView>
+    </AuthScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
-  flex: {
-    flex: 1,
-  },
-  content: {
-    padding: 24,
-    gap: 16,
-  },
-  description: {
-    opacity: 0.7,
-    marginBottom: 4,
+  card: {
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
+    gap: Spacing.md,
   },
   field: {
-    gap: 6,
+    gap: Spacing.xs + 2,
   },
   label: {
     fontSize: 13,
-    opacity: 0.7,
-  },
-  placeholder: {
-    opacity: 0.5,
+    fontWeight: '500',
   },
   addressField: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm + 2,
   },
   bankRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: Spacing.sm,
   },
   bankSelect: {
     width: 140,
@@ -339,37 +303,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   programsSection: {
-    gap: 12,
-    marginTop: 8,
+    gap: Spacing.sm + 4,
+    marginTop: Spacing.xs,
   },
   error: {
-    color: '#d32f2f',
     fontSize: 13,
   },
   button: {
-    backgroundColor: '#0a7ea4',
-    borderRadius: 8,
-    paddingVertical: 14,
+    marginTop: Spacing.xs,
+  },
+  successCard: {
     alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  successContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-    gap: 16,
-  },
-  successTitle: {
-    textAlign: 'center',
   },
   successText: {
     textAlign: 'center',
@@ -377,7 +321,6 @@ const styles = StyleSheet.create({
   },
   successButton: {
     minWidth: 200,
-    paddingHorizontal: 32,
-    marginTop: 8,
+    paddingHorizontal: Spacing.xl,
   },
 });
