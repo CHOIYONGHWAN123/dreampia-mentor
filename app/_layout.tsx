@@ -88,6 +88,7 @@ function RootNavigator() {
       </Stack.Protected>
       <Stack.Screen name="privacy" options={{ title: '개인정보처리방침' }} />
       <Stack.Screen name="support" options={{ title: '고객 지원' }} />
+      <Stack.Screen name="account-deletion" options={{ title: '계정 및 데이터 삭제' }} />
     </Stack>
   );
 }
