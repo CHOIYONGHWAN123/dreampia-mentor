@@ -58,8 +58,8 @@ export function LevelFileInputs({
                 file={profileFiles[l.schoolLevel] ?? null}
                 existingFileUrl={existingProfileFileUrls[l.schoolLevel] ?? null}
                 onChange={(file) => onProfileChange(l.schoolLevel, file)}
-                templateAsset={require('@/assets/templates/profile-template.hwpx')}
-                templateFilename="드림피아_프로필_양식.hwpx"
+                templateAsset={require('@/assets/templates/profile_template.hwp')}
+                templateFilename="드림피아_프로필_양식.hwp"
               />
             </ThemedView>
           </ThemedView>
