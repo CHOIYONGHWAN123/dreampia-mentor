@@ -66,6 +66,7 @@ export default function SignupScreen() {
   const [agreedPrivacy, setAgreedPrivacy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [emailConfirmationSent, setEmailConfirmationSent] = useState(false);
 
   const [terms, setTerms] = useState<Terms | null>(null);
   const [modalField, setModalField] = useState<'service_terms' | 'privacy_policy' | null>(null);
@@ -136,7 +137,7 @@ export default function SignupScreen() {
     setError(null);
     setSubmitting(true);
     try {
-      await signUp({
+      const { requiresEmailConfirmation } = await signUp({
         email: email.trim(),
         password,
         name,
@@ -144,13 +145,31 @@ export default function SignupScreen() {
         termsVersionId: terms.id,
         identityVerificationCi,
       });
-      router.replace('/');
+      if (requiresEmailConfirmation) {
+        setEmailConfirmationSent(true);
+      } else {
+        router.replace('/');
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : '회원가입에 실패했습니다.');
     } finally {
       setSubmitting(false);
     }
   };
+
+  if (emailConfirmationSent) {
+    return (
+      <AuthScreen title="이메일을 확인해주세요" subtitle="인증 후 로그인할 수 있어요">
+        <ThemedView style={[styles.card, styles.confirmCard, { backgroundColor: card, boxShadow: Shadows.raised }]}>
+          <ThemedText style={{ lineHeight: 22 }}>
+            {email.trim()}로 인증 메일을 보냈습니다.{'\n'}메일함에서 인증 링크를 눌러주시면 가입이
+            완료됩니다.{'\n'}(스팸함도 확인해주세요)
+          </ThemedText>
+          <Button title="로그인 화면으로" onPress={() => router.replace('/login')} style={styles.button} />
+        </ThemedView>
+      </AuthScreen>
+    );
+  }
 
   return (
     <>
@@ -292,6 +311,9 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     padding: Spacing.lg,
     gap: Spacing.md,
+  },
+  confirmCard: {
+    alignItems: 'center',
   },
   field: {
     gap: Spacing.xs + 2,

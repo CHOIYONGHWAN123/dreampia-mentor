@@ -19,6 +19,7 @@ type AuthContextValue = {
   isMentorLoading: boolean;
   isPasswordRecovery: boolean;
   signIn: (email: string, password: string) => Promise<void>;
+  // 반환값: 이메일 인증이 필요해 세션이 바로 생기지 않은 경우(현재 기본값) true.
   signUp: (params: {
     email: string;
     password: string;
@@ -26,7 +27,7 @@ type AuthContextValue = {
     phone: string;
     termsVersionId: string;
     identityVerificationCi: string | null;
-  }) => Promise<void>;
+  }) => Promise<{ requiresEmailConfirmation: boolean }>;
   signOut: () => Promise<void>;
 };
 
@@ -104,10 +105,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
     termsVersionId: string;
     identityVerificationCi: string | null;
   }) => {
-    const { error } = await supabase.auth.signUp({
+    // 본인인증(PortOne) 심사가 끝나기 전까지는 이메일 인증으로 대체한다. Supabase 프로젝트의
+    // "Confirm email"이 켜져 있으면 이 시점엔 세션이 안 생기고 확인 메일만 발송된다 —
+    // 사용자가 메일의 링크를 눌러야 로그인 가능한 상태가 된다.
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo: 'https://dreampia-mentor.vercel.app/login',
         data: {
           name,
           phone,
@@ -118,6 +123,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       },
     });
     if (error) throw error;
+    return { requiresEmailConfirmation: !data.session };
   };
 
   const signOut = async () => {
