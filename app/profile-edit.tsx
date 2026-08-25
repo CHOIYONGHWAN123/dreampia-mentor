@@ -18,6 +18,7 @@ import { AuthTextField } from '@/components/auth-text-field';
 import { Button } from '@/components/button';
 import { DaumAddressSearch } from '@/components/daum-address-search';
 import { FieldSectionForm } from '@/components/field-section-form';
+import { FilePicker } from '@/components/file-picker';
 import { MentorCodeSearch } from '@/components/mentor-code-search';
 import { SelectField } from '@/components/select-field';
 import { ThemedText } from '@/components/themed-text';
@@ -35,7 +36,7 @@ import {
 import { signAgreement } from '@/lib/sign-agreement';
 import { supabase } from '@/lib/supabase';
 import { useProgramCatalog } from '@/lib/use-program-catalog';
-import { uploadFile } from '@/lib/upload-file';
+import { type PickedFile, uploadFile, uploadPrivateFile } from '@/lib/upload-file';
 
 export default function ProfileEditScreen() {
   const router = useRouter();
@@ -50,6 +51,8 @@ export default function ProfileEditScreen() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [idNumber, setIdNumber] = useState('');
+  const [idCardFile, setIdCardFile] = useState<PickedFile | null>(null);
+  const [existingIdCardFileUrl, setExistingIdCardFileUrl] = useState<string | null>(null);
   const [address, setAddress] = useState('');
   const [detailAddress, setDetailAddress] = useState('');
   const [addressSearchVisible, setAddressSearchVisible] = useState(false);
@@ -96,6 +99,7 @@ export default function ProfileEditScreen() {
     setName(mentor.name ?? '');
     setPhone(mentor.phone ?? '');
     setIdNumber(mentor.id_number ?? '');
+    setExistingIdCardFileUrl(mentor.id_card_file_url ?? null);
     setAddress(mentor.address ?? '');
     setDetailAddress(mentor.detail_address ?? '');
     setAvailableAreas(mentor.available_areas ?? []);
@@ -161,6 +165,10 @@ export default function ProfileEditScreen() {
       setError('주민번호, 주소, 계좌번호는 필수입니다.');
       return;
     }
+    if (!idCardFile && !existingIdCardFileUrl) {
+      setError('신분증 사진을 첨부해주세요.');
+      return;
+    }
     if (!signature && !existingAgreementFileUrl) {
       setError('동의서에 서명해주세요.');
       return;
@@ -184,6 +192,10 @@ export default function ProfileEditScreen() {
         if (pwError) throw new Error(pwError.message);
       }
 
+      const idCardFileUrl = idCardFile
+        ? await uploadPrivateFile('id-card', selfId, idCardFile)
+        : existingIdCardFileUrl;
+
       const { error: updateError } = await supabase
         .from('mentors')
         .update({
@@ -192,6 +204,7 @@ export default function ProfileEditScreen() {
           address: address.trim() || null,
           detail_address: detailAddress.trim() || null,
           id_number: idNumber.trim() || null,
+          id_card_file_url: idCardFileUrl,
           bank: bankName || null,
           bank_account: bankAccountNumber.trim() || null,
           belongs_to: belongsToId || null,
@@ -247,6 +260,11 @@ export default function ProfileEditScreen() {
           .from('mentor_occupation_programs')
           .insert(programRows);
         if (insertError) throw new Error(insertError.message);
+      }
+
+      if (idCardFile) {
+        setExistingIdCardFileUrl(idCardFileUrl);
+        setIdCardFile(null);
       }
 
       // 재서명한 경우에만 동의서 PDF를 새로 만든다 (기존 서명을 유지하는 경우는 건드리지 않는다).
@@ -317,6 +335,17 @@ export default function ProfileEditScreen() {
             onChangeText={setIdNumber}
             placeholder="000000-0000000"
           />
+
+          <ThemedView style={styles.field}>
+            <ThemedText style={[styles.label, { color: textMuted }]}>신분증 사진</ThemedText>
+            <FilePicker
+              file={idCardFile}
+              existingFileUrl={existingIdCardFileUrl}
+              onChange={setIdCardFile}
+              mimeTypes={['image/*', 'application/pdf']}
+              privateExisting
+            />
+          </ThemedView>
 
           <ThemedView style={styles.field}>
             <ThemedText style={[styles.label, { color: textMuted }]}>주소</ThemedText>

@@ -10,6 +10,7 @@ import { AuthTextField } from '@/components/auth-text-field';
 import { Button } from '@/components/button';
 import { DaumAddressSearch } from '@/components/daum-address-search';
 import { FieldSectionForm } from '@/components/field-section-form';
+import { FilePicker } from '@/components/file-picker';
 import { MentorCodeSearch } from '@/components/mentor-code-search';
 import { SelectField } from '@/components/select-field';
 import { ThemedText } from '@/components/themed-text';
@@ -22,7 +23,7 @@ import { createFieldSection, type FieldSectionState } from '@/lib/mentor-profile
 import { signAgreement } from '@/lib/sign-agreement';
 import { supabase } from '@/lib/supabase';
 import { useProgramCatalog } from '@/lib/use-program-catalog';
-import { uploadFile } from '@/lib/upload-file';
+import { type PickedFile, uploadFile, uploadPrivateFile } from '@/lib/upload-file';
 
 export default function ProfileSetupScreen() {
   const router = useRouter();
@@ -35,6 +36,7 @@ export default function ProfileSetupScreen() {
   const danger = useThemeColor({}, 'danger');
 
   const [idNumber, setIdNumber] = useState('');
+  const [idCardFile, setIdCardFile] = useState<PickedFile | null>(null);
   const [address, setAddress] = useState('');
   const [detailAddress, setDetailAddress] = useState('');
   const [addressSearchVisible, setAddressSearchVisible] = useState(false);
@@ -66,6 +68,10 @@ export default function ProfileSetupScreen() {
       setError('주민번호, 주소, 계좌번호는 필수입니다.');
       return;
     }
+    if (!idCardFile) {
+      setError('신분증 사진을 첨부해주세요.');
+      return;
+    }
     if (!signature) {
       setError('동의서에 서명해주세요.');
       return;
@@ -74,12 +80,15 @@ export default function ProfileSetupScreen() {
     setError(null);
     setSubmitting(true);
     try {
+      const idCardFileUrl = await uploadPrivateFile('id-card', selfId, idCardFile);
+
       const { data: updatedRows, error: updateError } = await supabase
         .from('mentors')
         .update({
           address: address.trim() || null,
           detail_address: detailAddress.trim() || null,
           id_number: idNumber.trim() || null,
+          id_card_file_url: idCardFileUrl,
           bank: bankName || null,
           bank_account: bankAccountNumber.trim() || null,
           belongs_to: belongsToId || null,
@@ -171,6 +180,15 @@ export default function ProfileSetupScreen() {
     <AuthScreen title="추가 정보 입력" subtitle="관리자 승인 및 강사료 정산을 위해 필요해요">
       <ThemedView style={[styles.card, { backgroundColor: card, boxShadow: Shadows.raised }]}>
         <AuthTextField label="주민번호" value={idNumber} onChangeText={setIdNumber} placeholder="000000-0000000" />
+
+        <ThemedView style={styles.field}>
+          <ThemedText style={[styles.label, { color: textMuted }]}>신분증 사진</ThemedText>
+          <FilePicker
+            file={idCardFile}
+            onChange={setIdCardFile}
+            mimeTypes={['image/*', 'application/pdf']}
+          />
+        </ThemedView>
 
         <ThemedView style={styles.field}>
           <ThemedText style={[styles.label, { color: textMuted }]}>주소</ThemedText>

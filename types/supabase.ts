@@ -197,6 +197,7 @@ export type Database = {
       event_rows: {
         Row: {
           attendance: boolean | null
+          attendance_reminder_sent_at: string | null
           classroom: string | null
           criminal_background_check: string | null
           end_time: string | null
@@ -211,6 +212,7 @@ export type Database = {
           mentor_id: string | null
           occupation_program_unit_id: string | null
           preparing: boolean
+          preparing_reminder_sent_at: string | null
           remarks: string | null
           school_request_response: string | null
           session_headcount: number | null
@@ -219,6 +221,7 @@ export type Database = {
         }
         Insert: {
           attendance?: boolean | null
+          attendance_reminder_sent_at?: string | null
           classroom?: string | null
           criminal_background_check?: string | null
           end_time?: string | null
@@ -233,6 +236,7 @@ export type Database = {
           mentor_id?: string | null
           occupation_program_unit_id?: string | null
           preparing?: boolean
+          preparing_reminder_sent_at?: string | null
           remarks?: string | null
           school_request_response?: string | null
           session_headcount?: number | null
@@ -241,6 +245,7 @@ export type Database = {
         }
         Update: {
           attendance?: boolean | null
+          attendance_reminder_sent_at?: string | null
           classroom?: string | null
           criminal_background_check?: string | null
           end_time?: string | null
@@ -255,6 +260,7 @@ export type Database = {
           mentor_id?: string | null
           occupation_program_unit_id?: string | null
           preparing?: boolean
+          preparing_reminder_sent_at?: string | null
           remarks?: string | null
           school_request_response?: string | null
           session_headcount?: number | null
@@ -673,31 +679,50 @@ export type Database = {
           },
         ]
       }
-      fields: {
+      field_event_categories: {
         Row: {
-          event_category_id: string | null
-          id: string
-          name: string
+          event_category_id: string
+          field_id: string
         }
         Insert: {
-          event_category_id?: string | null
-          id?: string
-          name: string
+          event_category_id: string
+          field_id: string
         }
         Update: {
-          event_category_id?: string | null
-          id?: string
-          name?: string
+          event_category_id?: string
+          field_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "fields_event_category_id_fkey"
+            foreignKeyName: "field_event_categories_event_category_id_fkey"
             columns: ["event_category_id"]
             isOneToOne: false
             referencedRelation: "event_categories"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "field_event_categories_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "fields"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      fields: {
+        Row: {
+          id: string
+          name: string
+        }
+        Insert: {
+          id?: string
+          name: string
+        }
+        Update: {
+          id?: string
+          name?: string
+        }
+        Relationships: []
       }
       institutions: {
         Row: {
@@ -1127,6 +1152,7 @@ export type Database = {
           created_at: string
           detail_address: string | null
           id: string
+          id_card_file_url: string | null
           id_number: string | null
           identity_verification_ci: string | null
           identity_verified_at: string | null
@@ -1150,6 +1176,7 @@ export type Database = {
           created_at?: string
           detail_address?: string | null
           id?: string
+          id_card_file_url?: string | null
           id_number?: string | null
           identity_verification_ci?: string | null
           identity_verified_at?: string | null
@@ -1173,6 +1200,7 @@ export type Database = {
           created_at?: string
           detail_address?: string | null
           id?: string
+          id_card_file_url?: string | null
           id_number?: string | null
           identity_verification_ci?: string | null
           identity_verified_at?: string | null
@@ -1871,6 +1899,7 @@ export type Database = {
           name: string
         }[]
       }
+      send_lecture_reminders: { Args: never; Returns: undefined }
       spawn_fallback_bundles: {
         Args: { p_created_by: string; p_event_row_ids: string[] }
         Returns: undefined

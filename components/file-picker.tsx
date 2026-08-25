@@ -14,9 +14,11 @@ export function FilePicker({
   templateAsset,
   templateUrl,
   templateFilename,
+  privateExisting = false,
 }: {
   file: PickedFile | null;
   // 회원정보 수정 화면처럼 이미 업로드된 파일이 있을 때, 새로 고르지 않으면 이 파일을 유지한다는 표시용.
+  // privateExisting이 true면 이 값은 실제 URL이 아니라 private 버킷 내부 경로이므로 "보기" 링크를 안 띄운다.
   existingFileUrl?: string | null;
   onChange: (file: PickedFile | null) => void;
   mimeTypes?: string[];
@@ -25,6 +27,9 @@ export function FilePicker({
   // 관리자가 올려둔 원격 양식(예: 프로그램 유닛별 PPT 양식 — Supabase Storage URL).
   templateUrl?: string | null;
   templateFilename?: string;
+  // 신분증 사진처럼 private 버킷에 저장되는 파일용. true면 existingFileUrl은 경로일 뿐이라
+  // 클릭해서 바로 열 수 없으므로 "보기" 링크를 숨긴다.
+  privateExisting?: boolean;
 }) {
   const handlePick = async () => {
     const result = await DocumentPicker.getDocumentAsync({
@@ -67,9 +72,11 @@ export function FilePicker({
             <ThemedText style={styles.existingText} numberOfLines={1}>
               📎 기존 파일 등록됨 (탭하여 교체)
             </ThemedText>
-            <TouchableOpacity onPress={() => Linking.openURL(existingFileUrl)} hitSlop={8}>
-              <ThemedText style={styles.viewLink}>보기</ThemedText>
-            </TouchableOpacity>
+            {!privateExisting && (
+              <TouchableOpacity onPress={() => Linking.openURL(existingFileUrl)} hitSlop={8}>
+                <ThemedText style={styles.viewLink}>보기</ThemedText>
+              </TouchableOpacity>
+            )}
           </>
         ) : (
           <ThemedText style={styles.placeholder}>파일 선택</ThemedText>
