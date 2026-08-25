@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AgreementSignature } from '@/components/agreement-signature';
+import { AgreementDocuments } from '@/components/agreement-documents';
 import { AreaSelector } from '@/components/area-selector';
 import { AuthScreen } from '@/components/auth-screen';
 import { AuthTextField } from '@/components/auth-text-field';
@@ -255,7 +255,7 @@ export default function ProfileSetupScreen() {
 
         <ThemedView style={styles.field}>
           <ThemedText style={[styles.label, { color: textMuted }]}>동의서</ThemedText>
-          <AgreementSignature signature={signature} onChange={setSignature} />
+          <AgreementDocuments signature={signature} onChange={setSignature} />
         </ThemedView>
 
         <ThemedView style={styles.field}>

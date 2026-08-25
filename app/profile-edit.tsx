@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AgreementSignature } from '@/components/agreement-signature';
+import { AgreementDocuments, type ConsentDocKey } from '@/components/agreement-documents';
 import { AreaSelector } from '@/components/area-selector';
 import { AuthTextField } from '@/components/auth-text-field';
 import { Button } from '@/components/button';
@@ -62,7 +62,11 @@ export default function ProfileEditScreen() {
   const [bankAccountNumber, setBankAccountNumber] = useState('');
   const [belongsToId, setBelongsToId] = useState('');
   const [belongsToName, setBelongsToName] = useState('');
-  const [existingAgreementFileUrl, setExistingAgreementFileUrl] = useState<string | null>(null);
+  const [existingConsentFileUrls, setExistingConsentFileUrls] = useState<Record<ConsentDocKey, string | null>>({
+    criminalRecordConsent: null,
+    adminInfoConsent: null,
+    contract: null,
+  });
   const [signature, setSignature] = useState<string | null>(null);
   const [availableAreas, setAvailableAreas] = useState<string[]>([]);
   const [fieldSections, setFieldSections] = useState<FieldSectionState[]>([createFieldSection()]);
@@ -106,7 +110,11 @@ export default function ProfileEditScreen() {
     setAddress(mentor.address ?? '');
     setDetailAddress(mentor.detail_address ?? '');
     setAvailableAreas(mentor.available_areas ?? []);
-    setExistingAgreementFileUrl(mentor.agreement_file_url ?? null);
+    setExistingConsentFileUrls({
+      criminalRecordConsent: mentor.criminal_record_consent_file_url ?? null,
+      adminInfoConsent: mentor.admin_info_consent_file_url ?? null,
+      contract: mentor.contract_file_url ?? null,
+    });
     setBelongsToId(mentor.belongs_to ?? '');
 
     setBankName(mentor.bank ?? '');
@@ -176,7 +184,8 @@ export default function ProfileEditScreen() {
       setError('통장사본을 첨부해주세요.');
       return;
     }
-    if (!signature && !existingAgreementFileUrl) {
+    const hasExistingConsent = Object.values(existingConsentFileUrls).some(Boolean);
+    if (!signature && !hasExistingConsent) {
       setError('동의서에 서명해주세요.');
       return;
     }
@@ -282,10 +291,14 @@ export default function ProfileEditScreen() {
         setBankbookFile(null);
       }
 
-      // 재서명한 경우에만 동의서 PDF를 새로 만든다 (기존 서명을 유지하는 경우는 건드리지 않는다).
+      // 재서명한 경우에만 동의서 PDF 3종을 새로 만든다 (기존 서명을 유지하는 경우는 건드리지 않는다).
       if (signature) {
-        const newAgreementFileUrl = await signAgreement(signature);
-        setExistingAgreementFileUrl(newAgreementFileUrl);
+        const newPaths = await signAgreement(signature);
+        setExistingConsentFileUrls({
+          criminalRecordConsent: newPaths.criminalRecordConsent,
+          adminInfoConsent: newPaths.adminInfoConsent,
+          contract: newPaths.contract,
+        });
         setSignature(null);
       }
 
@@ -428,10 +441,10 @@ export default function ProfileEditScreen() {
 
           <ThemedView style={styles.field}>
             <ThemedText style={[styles.label, { color: textMuted }]}>동의서</ThemedText>
-            <AgreementSignature
+            <AgreementDocuments
               signature={signature}
               onChange={setSignature}
-              existingFileUrl={existingAgreementFileUrl}
+              existingFileUrls={existingConsentFileUrls}
             />
           </ThemedView>
 
