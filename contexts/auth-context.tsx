@@ -105,6 +105,43 @@ export function AuthProvider({ children }: PropsWithChildren) {
     termsVersionId: string;
     identityVerificationCi: string | null;
   }) => {
+    // admin과 auth.users를 공유하므로, 입력한 이메일이 이미 관리자로 가입된 계정일 수 있다.
+    // 이 경우 로그인이 먼저 성공한다 — mentors 행만 없는 것이므로 새로 만들어 멘토를 겸직시킨다.
+    // (admin 저장소 app/(auth)/signup/page.tsx의 반대 방향 로직과 동일한 패턴.)
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (!signInError && signInData.user) {
+      const { data: existingMentor } = await supabase
+        .from('mentors')
+        .select('id')
+        .eq('id', signInData.user.id)
+        .maybeSingle();
+
+      if (existingMentor) {
+        // 이미 멘토로도 가입되어 있음 — 그냥 로그인된 것으로 처리한다.
+        return { requiresEmailConfirmation: false };
+      }
+
+      const { error: insertError } = await supabase.from('mentors').insert({
+        id: signInData.user.id,
+        // mentors_assign_unique_code 트리거가 빈 값을 실제 코드로 채워준다.
+        mentor_unique_code: '',
+        name,
+        phone,
+        is_authenticated: false,
+        terms_agreed_at: new Date().toISOString(),
+        terms_version_id: termsVersionId,
+        identity_verified_at: identityVerificationCi ? new Date().toISOString() : null,
+        identity_verification_ci: identityVerificationCi,
+      });
+      if (insertError) throw new Error(insertError.message);
+
+      return { requiresEmailConfirmation: false };
+    }
+
     // 본인인증(PortOne) 심사가 끝나기 전까지는 이메일 인증으로 대체한다. Supabase 프로젝트의
     // "Confirm email"이 켜져 있으면 이 시점엔 세션이 안 생기고 확인 메일만 발송된다 —
     // 사용자가 메일의 링크를 눌러야 로그인 가능한 상태가 된다.
@@ -122,7 +159,19 @@ export function AuthProvider({ children }: PropsWithChildren) {
         },
       },
     });
-    if (error) throw error;
+    if (error) {
+      if (error.message.includes('already registered')) {
+        throw new Error('이미 사용 중인 이메일입니다. 비밀번호가 다르다면 로그인 페이지에서 비밀번호를 재설정해주세요.');
+      }
+      throw error;
+    }
+
+    // 이메일 확인이 켜져 있으면 이미 가입된 이메일이어도 signUp()이 에러 없이
+    // "빈 identities"를 담아 응답한다(보안상 계정 존재 여부를 숨기기 위함) — 이 경우도 감지해야 한다.
+    if (data.user && data.user.identities?.length === 0) {
+      throw new Error('이미 사용 중인 이메일입니다. 비밀번호가 다르다면 로그인 페이지에서 비밀번호를 재설정해주세요.');
+    }
+
     return { requiresEmailConfirmation: !data.session };
   };
 
