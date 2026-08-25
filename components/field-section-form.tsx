@@ -8,6 +8,7 @@ import { SelectField } from '@/components/select-field';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { createProgramEntry, type FieldSectionState } from '@/lib/mentor-profile-types';
+import type { FieldPptTemplateUrls } from '@/lib/use-program-catalog';
 
 // "분야 추가" 버튼으로 늘어나는 한 섹션: 분야 → 직종 선택 후, 그 직종에 속한 프로그램을
 // "프로그램 추가" 버튼으로 여러 개 등록할 수 있다.
@@ -17,6 +18,7 @@ export function FieldSectionForm({
   occupations,
   programs,
   units,
+  fieldPptTemplateUrls,
   globalExcludedUnitIds,
   selfId,
   onChange,
@@ -27,6 +29,7 @@ export function FieldSectionForm({
   occupations: { id: string; name: string; field_id: string | null }[];
   programs: { id: string; name: string; occupation_id: string | null }[];
   units: UnitOption[];
+  fieldPptTemplateUrls: Record<string, FieldPptTemplateUrls>;
   globalExcludedUnitIds: Set<string>;
   selfId: string;
   onChange: (next: FieldSectionState) => void;
@@ -110,6 +113,7 @@ export function FieldSectionForm({
               entry={entry}
               programs={filteredPrograms}
               units={units}
+              fieldPptTemplateUrls={fieldPptTemplateUrls[section.fieldId]}
               excludedUnitIds={globalExcludedUnitIds}
               selfId={selfId}
               onChange={(next) =>

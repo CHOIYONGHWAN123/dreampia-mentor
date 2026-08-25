@@ -133,23 +133,44 @@ export type Database = {
       event_categories: {
         Row: {
           created_at: string
+          elementary_ppt_template_id: string | null
           id: string
           name: string
+          secondary_ppt_template_id: string | null
           sort_order: number | null
         }
         Insert: {
           created_at?: string
+          elementary_ppt_template_id?: string | null
           id?: string
           name: string
+          secondary_ppt_template_id?: string | null
           sort_order?: number | null
         }
         Update: {
           created_at?: string
+          elementary_ppt_template_id?: string | null
           id?: string
           name?: string
+          secondary_ppt_template_id?: string | null
           sort_order?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "event_categories_elementary_ppt_template_id_fkey"
+            columns: ["elementary_ppt_template_id"]
+            isOneToOne: false
+            referencedRelation: "ppt_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_categories_secondary_ppt_template_id_fkey"
+            columns: ["secondary_ppt_template_id"]
+            isOneToOne: false
+            referencedRelation: "ppt_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       event_photos: {
         Row: {
@@ -1486,7 +1507,7 @@ export type Database = {
           kit_threshold: number | null
           max_daily_stock: number | null
           memo: string | null
-          occupation_program_unit_id: string | null
+          occupation_programs_id: string | null
           qty_per_person: number
           updated_at: string
         }
@@ -1496,7 +1517,7 @@ export type Database = {
           kit_threshold?: number | null
           max_daily_stock?: number | null
           memo?: string | null
-          occupation_program_unit_id?: string | null
+          occupation_programs_id?: string | null
           qty_per_person?: number
           updated_at?: string
         }
@@ -1506,30 +1527,16 @@ export type Database = {
           kit_threshold?: number | null
           max_daily_stock?: number | null
           memo?: string | null
-          occupation_program_unit_id?: string | null
+          occupation_programs_id?: string | null
           qty_per_person?: number
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "supplies_occupation_program_unit_id_fkey"
-            columns: ["occupation_program_unit_id"]
-            isOneToOne: true
-            referencedRelation: "mentor_event_row_detail"
-            referencedColumns: ["unit_id"]
-          },
-          {
-            foreignKeyName: "supplies_occupation_program_unit_id_fkey"
-            columns: ["occupation_program_unit_id"]
-            isOneToOne: true
-            referencedRelation: "mentor_invitation_requests"
-            referencedColumns: ["unit_id"]
-          },
-          {
-            foreignKeyName: "supplies_occupation_program_unit_id_fkey"
-            columns: ["occupation_program_unit_id"]
-            isOneToOne: true
-            referencedRelation: "occupation_program_unit"
+            foreignKeyName: "supplies_occupation_programs_id_fkey"
+            columns: ["occupation_programs_id"]
+            isOneToOne: false
+            referencedRelation: "occupation_programs"
             referencedColumns: ["id"]
           },
         ]

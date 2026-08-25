@@ -290,6 +290,7 @@ export default function ProfileSetupScreen() {
                   occupations={catalog.occupations}
                   programs={catalog.programs}
                   units={catalog.units}
+                  fieldPptTemplateUrls={catalog.fieldPptTemplateUrls}
                   globalExcludedUnitIds={globalExcludedUnitIds}
                   selfId={selfId}
                   onChange={updateSection}

@@ -7,12 +7,14 @@ import { ProgramUnitPicker, type ProgramOption, type UnitOption } from '@/compon
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import type { ProgramEntryState } from '@/lib/mentor-profile-types';
+import type { FieldPptTemplateUrls } from '@/lib/use-program-catalog';
 
 // 프로그램(occupation_programs) 1건 선택 → 교급(다중) → 교급별 유닛/PPT를 입력받는 단위.
 export function ProgramEntryForm({
   entry,
   programs,
   units,
+  fieldPptTemplateUrls,
   excludedUnitIds,
   selfId,
   onChange,
@@ -21,6 +23,7 @@ export function ProgramEntryForm({
   entry: ProgramEntryState;
   programs: ProgramOption[];
   units: UnitOption[];
+  fieldPptTemplateUrls?: FieldPptTemplateUrls;
   excludedUnitIds: Set<string>;
   selfId: string;
   onChange: (next: ProgramEntryState) => void;
@@ -63,6 +66,7 @@ export function ProgramEntryForm({
       <LevelFileInputs
         levels={entry.selection.levels}
         units={units}
+        fieldPptTemplateUrls={fieldPptTemplateUrls}
         pptFiles={entry.pptFiles}
         profileFiles={entry.profileFiles}
         existingPptFileUrls={entry.existingPptFileUrls}
