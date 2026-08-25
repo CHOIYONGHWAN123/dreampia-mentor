@@ -37,6 +37,7 @@ export default function ProfileSetupScreen() {
 
   const [idNumber, setIdNumber] = useState('');
   const [idCardFile, setIdCardFile] = useState<PickedFile | null>(null);
+  const [bankbookFile, setBankbookFile] = useState<PickedFile | null>(null);
   const [address, setAddress] = useState('');
   const [detailAddress, setDetailAddress] = useState('');
   const [addressSearchVisible, setAddressSearchVisible] = useState(false);
@@ -72,6 +73,10 @@ export default function ProfileSetupScreen() {
       setError('신분증 사진을 첨부해주세요.');
       return;
     }
+    if (!bankbookFile) {
+      setError('통장사본을 첨부해주세요.');
+      return;
+    }
     if (!signature) {
       setError('동의서에 서명해주세요.');
       return;
@@ -81,6 +86,7 @@ export default function ProfileSetupScreen() {
     setSubmitting(true);
     try {
       const idCardFileUrl = await uploadPrivateFile('id-card', selfId, idCardFile);
+      const bankbookFileUrl = await uploadPrivateFile('bankbook', selfId, bankbookFile);
 
       const { data: updatedRows, error: updateError } = await supabase
         .from('mentors')
@@ -91,6 +97,7 @@ export default function ProfileSetupScreen() {
           id_card_file_url: idCardFileUrl,
           bank: bankName || null,
           bank_account: bankAccountNumber.trim() || null,
+          bankbook_file_url: bankbookFileUrl,
           belongs_to: belongsToId || null,
           available_areas: availableAreas.length ? availableAreas : null,
         })
@@ -223,6 +230,15 @@ export default function ProfileSetupScreen() {
               />
             </ThemedView>
           </ThemedView>
+        </ThemedView>
+
+        <ThemedView style={styles.field}>
+          <ThemedText style={[styles.label, { color: textMuted }]}>통장사본</ThemedText>
+          <FilePicker
+            file={bankbookFile}
+            onChange={setBankbookFile}
+            mimeTypes={['image/*', 'application/pdf']}
+          />
         </ThemedView>
 
         <ThemedView style={styles.field}>

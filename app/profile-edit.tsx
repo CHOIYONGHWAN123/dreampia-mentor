@@ -53,6 +53,8 @@ export default function ProfileEditScreen() {
   const [idNumber, setIdNumber] = useState('');
   const [idCardFile, setIdCardFile] = useState<PickedFile | null>(null);
   const [existingIdCardFileUrl, setExistingIdCardFileUrl] = useState<string | null>(null);
+  const [bankbookFile, setBankbookFile] = useState<PickedFile | null>(null);
+  const [existingBankbookFileUrl, setExistingBankbookFileUrl] = useState<string | null>(null);
   const [address, setAddress] = useState('');
   const [detailAddress, setDetailAddress] = useState('');
   const [addressSearchVisible, setAddressSearchVisible] = useState(false);
@@ -100,6 +102,7 @@ export default function ProfileEditScreen() {
     setPhone(mentor.phone ?? '');
     setIdNumber(mentor.id_number ?? '');
     setExistingIdCardFileUrl(mentor.id_card_file_url ?? null);
+    setExistingBankbookFileUrl(mentor.bankbook_file_url ?? null);
     setAddress(mentor.address ?? '');
     setDetailAddress(mentor.detail_address ?? '');
     setAvailableAreas(mentor.available_areas ?? []);
@@ -169,6 +172,10 @@ export default function ProfileEditScreen() {
       setError('신분증 사진을 첨부해주세요.');
       return;
     }
+    if (!bankbookFile && !existingBankbookFileUrl) {
+      setError('통장사본을 첨부해주세요.');
+      return;
+    }
     if (!signature && !existingAgreementFileUrl) {
       setError('동의서에 서명해주세요.');
       return;
@@ -195,6 +202,9 @@ export default function ProfileEditScreen() {
       const idCardFileUrl = idCardFile
         ? await uploadPrivateFile('id-card', selfId, idCardFile)
         : existingIdCardFileUrl;
+      const bankbookFileUrl = bankbookFile
+        ? await uploadPrivateFile('bankbook', selfId, bankbookFile)
+        : existingBankbookFileUrl;
 
       const { error: updateError } = await supabase
         .from('mentors')
@@ -207,6 +217,7 @@ export default function ProfileEditScreen() {
           id_card_file_url: idCardFileUrl,
           bank: bankName || null,
           bank_account: bankAccountNumber.trim() || null,
+          bankbook_file_url: bankbookFileUrl,
           belongs_to: belongsToId || null,
           available_areas: availableAreas.length ? availableAreas : null,
         })
@@ -265,6 +276,10 @@ export default function ProfileEditScreen() {
       if (idCardFile) {
         setExistingIdCardFileUrl(idCardFileUrl);
         setIdCardFile(null);
+      }
+      if (bankbookFile) {
+        setExistingBankbookFileUrl(bankbookFileUrl);
+        setBankbookFile(null);
       }
 
       // 재서명한 경우에만 동의서 PDF를 새로 만든다 (기존 서명을 유지하는 경우는 건드리지 않는다).
@@ -386,6 +401,17 @@ export default function ProfileEditScreen() {
                 />
               </ThemedView>
             </ThemedView>
+          </ThemedView>
+
+          <ThemedView style={styles.field}>
+            <ThemedText style={[styles.label, { color: textMuted }]}>통장사본</ThemedText>
+            <FilePicker
+              file={bankbookFile}
+              existingFileUrl={existingBankbookFileUrl}
+              onChange={setBankbookFile}
+              mimeTypes={['image/*', 'application/pdf']}
+              privateExisting
+            />
           </ThemedView>
 
           <ThemedView style={styles.field}>
