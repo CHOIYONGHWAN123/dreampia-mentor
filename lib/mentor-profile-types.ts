@@ -27,6 +27,10 @@ export interface FieldSectionState {
   fieldId: string;
   occupationId: string;
   programEntries: ProgramEntryState[];
+  // 자격증은 프로그램/교급이 아니라 이 분야 섹션(직종) 단위로 여러 장 첨부한다.
+  certificateFiles: PickedFile[];
+  // 회원정보 수정 화면에서 기존에 등록돼 있던 자격증 경로들. 제거하지 않으면 그대로 유지된다.
+  existingCertificateFileUrls: string[];
 }
 
 export function createProgramEntry(): ProgramEntryState {
@@ -51,6 +55,8 @@ export function createFieldSection(): FieldSectionState {
     fieldId: '',
     occupationId: '',
     programEntries: [createProgramEntry()],
+    certificateFiles: [],
+    existingCertificateFileUrls: [],
   };
 }
 
@@ -70,7 +76,8 @@ export type ExistingMentorOccupationProgramRow = {
 export function buildFieldSectionsFromExisting(
   rows: ExistingMentorOccupationProgramRow[],
   catalog: ProgramCatalog,
-  payerNames: Record<string, string>
+  payerNames: Record<string, string>,
+  certsByOccupation: Record<string, string[]> = {}
 ): FieldSectionState[] {
   const unitById = new Map(catalog.units.map((u) => [u.id, u]));
   const programById = new Map(catalog.programs.map((p) => [p.id, p]));
@@ -114,10 +121,27 @@ export function buildFieldSectionsFromExisting(
     entry.existingProfileFileUrls[schoolLevel] = row.profile_file_url;
   }
 
+  // 자격증만 있고 프로그램은 아직 하나도 등록하지 않은 직종도 있을 수 있다(프로그램 선택 전에
+  // 자격증부터 올려두는 경우). 그런 직종도 프로그램 0개짜리 섹션으로 화면에 남겨서 자격증이
+  // 조용히 사라지지 않게 한다.
+  for (const occupationId of Object.keys(certsByOccupation)) {
+    if (sectionsByOccupation.has(occupationId)) continue;
+    if (!certsByOccupation[occupationId]?.length) continue;
+    const occupation = occupationById.get(occupationId);
+    if (!occupation) continue;
+    sectionsByOccupation.set(occupationId, {
+      fieldId: occupation.field_id ?? '',
+      occupationId: occupation.id,
+      entriesByProgram: new Map(),
+    });
+  }
+
   return [...sectionsByOccupation.values()].map((section) => ({
     key: createLocalKey(),
     fieldId: section.fieldId,
     occupationId: section.occupationId,
     programEntries: [...section.entriesByProgram.values()],
+    certificateFiles: [],
+    existingCertificateFileUrls: certsByOccupation[section.occupationId] ?? [],
   }));
 }

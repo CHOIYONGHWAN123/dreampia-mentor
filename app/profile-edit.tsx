@@ -80,12 +80,13 @@ export default function ProfileEditScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   const [existingProgramRows, setExistingProgramRows] = useState<ExistingMentorOccupationProgramRow[]>([]);
+  const [certsByOccupation, setCertsByOccupation] = useState<Record<string, string[]>>({});
   const [payerNames, setPayerNames] = useState<Record<string, string>>({});
   const sectionsInitializedRef = useRef(false);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [mentorRes, mopRes] = await Promise.all([
+    const [mentorRes, mopRes, certRes] = await Promise.all([
       supabase.from('mentors').select('*').eq('id', selfId).maybeSingle(),
       supabase
         .from('mentor_occupation_programs')
@@ -93,6 +94,7 @@ export default function ProfileEditScreen() {
           'occupation_program_unit_id, lecture_fee_payer_id, material_fee_payer_id, ppt_file_url, profile_file_url, school_request_note'
         )
         .eq('mentor_id', selfId),
+      supabase.from('mentor_occupation_certificates').select('occupation_id, file_url').eq('mentor_id', selfId),
     ]);
 
     if (mentorRes.error || !mentorRes.data) {
@@ -123,6 +125,14 @@ export default function ProfileEditScreen() {
     const mopRows = mopRes.data ?? [];
     setExistingProgramRows(mopRows);
 
+    const certMap: Record<string, string[]> = {};
+    for (const c of certRes.data ?? []) {
+      const arr = certMap[c.occupation_id] ?? [];
+      arr.push(c.file_url);
+      certMap[c.occupation_id] = arr;
+    }
+    setCertsByOccupation(certMap);
+
     const payerIds = [
       mentor.belongs_to,
       ...mopRows.map((r) => r.lecture_fee_payer_id),
@@ -151,10 +161,10 @@ export default function ProfileEditScreen() {
   // 멘토 정보 + 프로그램 카탈로그가 모두 준비되면 딱 한 번만 기존 등록 내용을 폼 상태로 되돌린다.
   useEffect(() => {
     if (sectionsInitializedRef.current || loading || catalogLoading) return;
-    const sections = buildFieldSectionsFromExisting(existingProgramRows, catalog, payerNames);
+    const sections = buildFieldSectionsFromExisting(existingProgramRows, catalog, payerNames, certsByOccupation);
     setFieldSections(sections.length > 0 ? sections : [createFieldSection()]);
     sectionsInitializedRef.current = true;
-  }, [loading, catalogLoading, catalog, existingProgramRows, payerNames]);
+  }, [loading, catalogLoading, catalog, existingProgramRows, payerNames, certsByOccupation]);
 
   const globalExcludedUnitIds = useMemo(() => {
     const ids = fieldSections.flatMap((s) =>
@@ -281,6 +291,39 @@ export default function ProfileEditScreen() {
           .insert(programRows);
         if (insertError) throw new Error(insertError.message);
       }
+
+      // 자격증도 프로그램과 동일하게 항상 기존 것을 지우고 새로 채워 넣는다.
+      const { error: certDeleteError } = await supabase
+        .from('mentor_occupation_certificates')
+        .delete()
+        .eq('mentor_id', selfId);
+      if (certDeleteError) throw new Error(certDeleteError.message);
+
+      const certificateRows: { mentor_id: string; occupation_id: string; file_url: string }[] = [];
+      const nextFieldSections = [];
+      for (const section of fieldSections) {
+        if (!section.occupationId) {
+          nextFieldSections.push(section);
+          continue;
+        }
+        const uploadedUrls: string[] = [];
+        for (const file of section.certificateFiles) {
+          const fileUrl = await uploadPrivateFile('certificate', selfId, file);
+          uploadedUrls.push(fileUrl);
+        }
+        const allUrls = [...section.existingCertificateFileUrls, ...uploadedUrls];
+        for (const fileUrl of allUrls) {
+          certificateRows.push({ mentor_id: selfId, occupation_id: section.occupationId, file_url: fileUrl });
+        }
+        nextFieldSections.push({ ...section, certificateFiles: [], existingCertificateFileUrls: allUrls });
+      }
+      if (certificateRows.length > 0) {
+        const { error: certInsertError } = await supabase
+          .from('mentor_occupation_certificates')
+          .insert(certificateRows);
+        if (certInsertError) throw new Error(certInsertError.message);
+      }
+      setFieldSections(nextFieldSections);
 
       if (idCardFile) {
         setExistingIdCardFileUrl(idCardFileUrl);

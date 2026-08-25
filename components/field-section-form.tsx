@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 
+import { MultiFilePicker } from '@/components/multi-file-picker';
 import { ProgramEntryForm } from '@/components/program-entry-form';
 import type { UnitOption } from '@/components/program-unit-picker';
 import { SelectField } from '@/components/select-field';
@@ -86,6 +87,22 @@ export function FieldSectionForm({
       </ThemedView>
 
       {section.occupationId && (
+        <ThemedView style={styles.certificateSection}>
+          <ThemedText style={styles.label}>자격증</ThemedText>
+          <MultiFilePicker
+            files={section.certificateFiles}
+            existingFileUrls={section.existingCertificateFileUrls}
+            onChangeFiles={(certificateFiles) => onChange({ ...section, certificateFiles })}
+            onChangeExistingFileUrls={(existingCertificateFileUrls) =>
+              onChange({ ...section, existingCertificateFileUrls })
+            }
+            bucket="certificate"
+            mimeTypes={['image/*', 'application/pdf']}
+          />
+        </ThemedView>
+      )}
+
+      {section.occupationId && (
         <ThemedView style={styles.entries}>
           {section.programEntries.map((entry) => (
             <ProgramEntryForm
@@ -158,6 +175,9 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     opacity: 0.6,
+  },
+  certificateSection: {
+    gap: 4,
   },
   entries: {
     gap: 8,

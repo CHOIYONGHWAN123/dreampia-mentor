@@ -159,6 +159,19 @@ export default function ProfileSetupScreen() {
         if (insertError) throw new Error(insertError.message);
       }
 
+      const certificateRows: { mentor_id: string; occupation_id: string; file_url: string }[] = [];
+      for (const section of fieldSections) {
+        if (!section.occupationId) continue;
+        for (const file of section.certificateFiles) {
+          const fileUrl = await uploadPrivateFile('certificate', selfId, file);
+          certificateRows.push({ mentor_id: selfId, occupation_id: section.occupationId, file_url: fileUrl });
+        }
+      }
+      if (certificateRows.length > 0) {
+        const { error: certError } = await supabase.from('mentor_occupation_certificates').insert(certificateRows);
+        if (certError) throw new Error(certError.message);
+      }
+
       // 방금 저장한 최신 프로필 값을 서버가 읽어 동의서 PDF를 만들기 때문에, 반드시 위 저장이 끝난 뒤 호출한다.
       await signAgreement(signature);
 
