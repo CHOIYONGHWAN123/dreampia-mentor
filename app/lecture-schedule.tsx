@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { FIELD_OPERATOR_UNIT_ID } from '@/constants/field-operator';
 import { useAuth } from '@/contexts/auth-context';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/supabase';
@@ -15,6 +16,8 @@ type SubMentorScheduleRow = Database['public']['Functions']['get_sub_mentor_sche
 
 type CalendarEvent = {
   eventRowId: string;
+  eventId: string | null;
+  unitId: string | null;
   mentorId: string;
   mentorName: string;
   startTime: string | null;
@@ -125,6 +128,8 @@ export default function LectureScheduleScreen() {
       .filter((row) => row.event_row_id && row.mentor_id)
       .map((row) => ({
         eventRowId: row.event_row_id as string,
+        eventId: row.event_id,
+        unitId: row.unit_id,
         mentorId: row.mentor_id as string,
         mentorName: mentor?.name ?? '나',
         startTime: row.start_time,
@@ -135,6 +140,8 @@ export default function LectureScheduleScreen() {
       }));
     const subEvents: CalendarEvent[] = subRows.map((row) => ({
       eventRowId: row.event_row_id,
+      eventId: null,
+      unitId: null,
       mentorId: row.mentor_id,
       mentorName: row.mentor_name,
       startTime: row.start_time,
@@ -203,6 +210,10 @@ export default function LectureScheduleScreen() {
   };
 
   const openDetail = (event: CalendarEvent) => {
+    if (event.mentorId === mentorId && event.unitId === FIELD_OPERATOR_UNIT_ID && event.eventId) {
+      router.push({ pathname: '/field-operator-event-detail', params: { eventId: event.eventId } });
+      return;
+    }
     router.push({ pathname: '/lecture-schedule-detail', params: { id: event.eventRowId } });
   };
 

@@ -60,8 +60,21 @@ export function ProgramUnitPicker({
 
   const availableLevels = useMemo(() => [...levelToUnits.keys()], [levelToUnits]);
 
+  // 교급 개념이 없는 프로그램(예: 현장운영자)은 유닛에 school_level이 없다. 이 경우 교급
+  // 선택 단계를 건너뛰고 유닛을 곧바로 선택된 것으로 취급한다.
+  const unleveledUnits = useMemo(
+    () => unitsForProgram.filter((u) => !u.school_level && !excludedUnitIds?.has(u.id)),
+    [unitsForProgram, excludedUnitIds]
+  );
+
   const handleProgramChange = (occupationProgramId: string) => {
-    onChange({ occupationProgramId, levels: [] });
+    const newUnleveled = units.filter(
+      (u) => u.occupation_programs_id === occupationProgramId && !u.school_level && !excludedUnitIds?.has(u.id)
+    );
+    onChange({
+      occupationProgramId,
+      levels: newUnleveled.map((u) => ({ schoolLevel: u.title, unitId: u.id })),
+    });
   };
 
   const toggleLevel = (level: string) => {
@@ -94,7 +107,7 @@ export function ProgramUnitPicker({
         placeholder="프로그램 선택"
       />
 
-      {value.occupationProgramId && (
+      {value.occupationProgramId && unleveledUnits.length === 0 && (
         <ThemedView style={styles.chipRow}>
           {availableLevels.length > 0 ? (
             availableLevels.map((level) => {
@@ -116,25 +129,27 @@ export function ProgramUnitPicker({
         </ThemedView>
       )}
 
-      {value.levels.map((levelSelection) => {
-        const candidates = (levelToUnits.get(levelSelection.schoolLevel) ?? []).filter(
-          (u) => !excludedUnitIds?.has(u.id) || u.id === levelSelection.unitId
-        );
-        return (
-          <ThemedView key={levelSelection.schoolLevel} style={styles.levelRow}>
-            <ThemedText style={styles.levelLabel}>{levelSelection.schoolLevel}</ThemedText>
-            <ThemedView style={styles.levelSelect}>
-              <SelectField
-                title={`${levelSelection.schoolLevel} 유닛 선택`}
-                value={levelSelection.unitId}
-                options={candidates.map((u) => ({ id: u.id, label: u.title }))}
-                onChange={(unitId) => changeUnitForLevel(levelSelection.schoolLevel, unitId)}
-                placeholder="유닛 선택"
-              />
+      {value.levels
+        .filter((levelSelection) => levelToUnits.has(levelSelection.schoolLevel))
+        .map((levelSelection) => {
+          const candidates = (levelToUnits.get(levelSelection.schoolLevel) ?? []).filter(
+            (u) => !excludedUnitIds?.has(u.id) || u.id === levelSelection.unitId
+          );
+          return (
+            <ThemedView key={levelSelection.schoolLevel} style={styles.levelRow}>
+              <ThemedText style={styles.levelLabel}>{levelSelection.schoolLevel}</ThemedText>
+              <ThemedView style={styles.levelSelect}>
+                <SelectField
+                  title={`${levelSelection.schoolLevel} 유닛 선택`}
+                  value={levelSelection.unitId}
+                  options={candidates.map((u) => ({ id: u.id, label: u.title }))}
+                  onChange={(unitId) => changeUnitForLevel(levelSelection.schoolLevel, unitId)}
+                  placeholder="유닛 선택"
+                />
+              </ThemedView>
             </ThemedView>
-          </ThemedView>
-        );
-      })}
+          );
+        })}
     </ThemedView>
   );
 }

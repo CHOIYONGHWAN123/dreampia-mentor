@@ -60,6 +60,7 @@ export default function LectureScheduleDetailScreen() {
   const [detail, setDetail] = useState<AnyDetailRow | null>(null);
   const [photos, setPhotos] = useState<EventPhoto[]>([]);
   const [payerNames, setPayerNames] = useState<Record<string, string>>({});
+  const [fieldOperator, setFieldOperator] = useState<{ mentor_name: string; mentor_phone: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -106,9 +107,18 @@ export default function LectureScheduleDetailScreen() {
       setPayerNames(map);
     }
 
+    // 소속강사 일정(읽기 전용)은 RPC 인가 조건(auth.uid() = my.mentor_id)을 못 만족해 항상
+    // 빈 배열이 와서 "배정 없음"으로 오인될 수 있으므로, 본인 일정일 때만 조회한다.
+    if (resolvedDetail?.mentor_id === mentorId) {
+      const fieldOperatorRes = await supabase.rpc('get_field_operator_contact', { p_event_row_id: id });
+      setFieldOperator(fieldOperatorRes.data?.[0] ?? null);
+    } else {
+      setFieldOperator(null);
+    }
+
     setLoadError(null);
     setLoading(false);
-  }, [id]);
+  }, [id, mentorId]);
 
   useEffect(() => {
     load();
@@ -248,6 +258,12 @@ export default function LectureScheduleDetailScreen() {
           <Field label="연락처" value={detail.mentor_phone ?? '-'} />
           <Field label="강의실" value={detail.classroom ?? '-'} />
           <Field label="대기실" value={detail.instructor_waiting_room ?? '-'} />
+          {isOwn && (
+            <>
+              <Field label="현장운영자" value={fieldOperator?.mentor_name ?? '현장운영자 배정 없음'} />
+              {fieldOperator && <Field label="현장운영자 연락처" value={fieldOperator.mentor_phone} />}
+            </>
+          )}
 
           {isOwn ? (
             <>
