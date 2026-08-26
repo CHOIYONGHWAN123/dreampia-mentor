@@ -8,7 +8,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/contexts/auth-context';
 import { supabase } from '@/lib/supabase';
-import { uploadFile, type PickedFile } from '@/lib/upload-file';
+import { uploadFile, uploadPrivateFile, type PickedFile } from '@/lib/upload-file';
 import type { Database } from '@/types/supabase';
 
 type DetailRow = Database['public']['Views']['mentor_event_row_detail']['Row'];
@@ -150,13 +150,13 @@ export default function LectureScheduleDetailScreen() {
     setActionError(null);
     setUploadingCriminal(true);
     try {
-      const url = await uploadFile('criminal-background-check', id, file);
+      const path = await uploadPrivateFile('criminal-background-check', id, file);
       const { error } = await supabase
         .from('event_rows')
-        .update({ criminal_background_check: url })
+        .update({ criminal_background_check: path })
         .eq('id', id);
       if (error) throw new Error(error.message);
-      setDetail((d) => (d ? { ...d, criminal_background_check: url } : d));
+      setDetail((d) => (d ? { ...d, criminal_background_check: path } : d));
     } catch (e) {
       setActionError(e instanceof Error ? e.message : '회보서 업로드에 실패했습니다.');
     } finally {
