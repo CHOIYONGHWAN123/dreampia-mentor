@@ -38,7 +38,7 @@ export function useProgramCatalog() {
       supabase.from('occupation_programs').select('id, name, occupation_id').order('name'),
       supabase
         .from('occupation_program_unit')
-        .select('id, title, occupation_programs_id, school_level, ppt_templates(file_url)')
+        .select('id, title, occupation_programs_id, school_level')
         .order('title'),
       supabase.from('field_event_categories').select('field_id, event_category_id'),
       supabase.from('event_categories').select('id, elementary_ppt_template_id, secondary_ppt_template_id'),
@@ -71,7 +71,6 @@ export function useProgramCatalog() {
           title: u.title,
           occupation_programs_id: u.occupation_programs_id,
           school_level: u.school_level,
-          ppt_template_url: u.ppt_templates?.file_url ?? null,
         })),
         fieldPptTemplateUrls,
       });

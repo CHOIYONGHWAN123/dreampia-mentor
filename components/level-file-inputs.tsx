@@ -1,7 +1,6 @@
 import { StyleSheet } from 'react-native';
 
 import { FilePicker } from '@/components/file-picker';
-import type { UnitOption } from '@/components/program-unit-picker';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import type { FieldPptTemplateUrls } from '@/lib/use-program-catalog';
@@ -10,7 +9,6 @@ import type { PickedFile } from '@/lib/upload-file';
 // 선택된 교급들마다 PPT/프로필 파일을 각각 받는 입력.
 export function LevelFileInputs({
   levels,
-  units,
   fieldPptTemplateUrls,
   pptFiles = {},
   profileFiles = {},
@@ -20,9 +18,7 @@ export function LevelFileInputs({
   onProfileChange,
 }: {
   levels: { schoolLevel: string; unitId: string }[];
-  // PPT 양식은 유닛마다 다를 수 있어(관리자가 유닛별로 등록), unitId로 카탈로그에서 찾는다.
-  units: UnitOption[];
-  // 유닛에 양식이 따로 없을 때 쓸 분야 기본 양식(초등/중고등).
+  // 교급별 분야 기본 양식(초등/중고등).
   fieldPptTemplateUrls?: FieldPptTemplateUrls;
   pptFiles?: Record<string, PickedFile | null>;
   profileFiles?: Record<string, PickedFile | null>;
@@ -36,7 +32,6 @@ export function LevelFileInputs({
   return (
     <ThemedView style={styles.container}>
       {levels.map((l) => {
-        const unit = units.find((u) => u.id === l.unitId);
         const fieldFallbackUrl =
           l.schoolLevel === '초등'
             ? fieldPptTemplateUrls?.elementary
@@ -58,7 +53,7 @@ export function LevelFileInputs({
                   'application/vnd.openxmlformats-officedocument.presentationml.presentation',
                   'application/pdf',
                 ]}
-                templateUrl={unit?.ppt_template_url ?? fieldFallbackUrl ?? null}
+                templateUrl={fieldFallbackUrl ?? null}
                 templateFilename="드림피아_PPT_양식.pptx"
               />
             </ThemedView>

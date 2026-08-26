@@ -25,7 +25,6 @@ export interface UnitOption {
   title: string;
   occupation_programs_id: string | null;
   school_level: string | null;
-  ppt_template_url: string | null;
 }
 
 // 분야 → 직종까지 선택된 상태에서, 프로그램 → 교급(다중선택) → 교급별 유닛을 고르는 공용 피커.
