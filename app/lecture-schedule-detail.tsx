@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Linking, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FilePicker } from '@/components/file-picker';
@@ -16,6 +16,8 @@ type DetailRow = Database['public']['Views']['mentor_event_row_detail']['Row'];
 type SubMentorDetailRow = Database['public']['Functions']['get_sub_mentor_event_row_detail']['Returns'][number];
 type AnyDetailRow = DetailRow | SubMentorDetailRow;
 type EventPhoto = Database['public']['Tables']['event_photos']['Row'];
+type EventScheduleEntry = { label: string | null; start_time: string | null; end_time: string | null };
+type NoticeFile = { id: string; url: string };
 
 const days = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -44,6 +46,19 @@ function hoursUntil(iso: string | null) {
   return (new Date(iso).getTime() - Date.now()) / 3_600_000;
 }
 
+function formatPeriodTime(time: string | null) {
+  return time ? time.slice(0, 5) : '-';
+}
+
+// 학교 전체 교시 시간표(event_schedules, 행사 등록 폼의 "교시" 항목). 이 강사 본인의
+// 강의 시간과는 별개로, 그 날 행사 전체가 어떻게 나뉘어 있는지 보여준다.
+function formatEventSchedules(schedules: unknown): string {
+  if (!Array.isArray(schedules) || schedules.length === 0) return '-';
+  return (schedules as EventScheduleEntry[])
+    .map((s) => `${s.label ?? '-'} ${formatPeriodTime(s.start_time)}~${formatPeriodTime(s.end_time)}`)
+    .join('\n');
+}
+
 // 드림피아 원가(dreampia_material_cost)는 강사에게 노출하지 않는다 — 드림피아 준비분은
 // 항상 0원으로 표시한다. 강사 준비분도 본인이 실제 재료비 입금자일 때만 실제 금액을 보여준다
 // (lib/material-cost.ts의 getMentorMaterialCost와 동일한 원칙 — 정산 화면과 일치시킨다).
@@ -64,6 +79,7 @@ export default function LectureScheduleDetailScreen() {
 
   const [detail, setDetail] = useState<AnyDetailRow | null>(null);
   const [photos, setPhotos] = useState<EventPhoto[]>([]);
+  const [noticeFiles, setNoticeFiles] = useState<NoticeFile[]>([]);
   const [payerNames, setPayerNames] = useState<Record<string, string>>({});
   const [fieldOperator, setFieldOperator] = useState<{ mentor_name: string; mentor_phone: string } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -101,6 +117,17 @@ export default function LectureScheduleDetailScreen() {
 
     const photosRes = await supabase.from('event_photos').select('*').eq('event_rows_id', id).order('created_at');
     setPhotos(photosRes.data ?? []);
+
+    if (resolvedDetail?.event_id) {
+      const noticeFilesRes = await supabase
+        .from('event_notice_files')
+        .select('id, url')
+        .eq('event_id', resolvedDetail.event_id)
+        .order('created_at');
+      setNoticeFiles(noticeFilesRes.data ?? []);
+    } else {
+      setNoticeFiles([]);
+    }
 
     const payerIds = [resolvedDetail?.lecture_fee_payer_id, resolvedDetail?.material_fee_payer_id].filter(
       (v): v is string => !!v
@@ -242,15 +269,36 @@ export default function LectureScheduleDetailScreen() {
         {actionError && <ThemedText style={styles.errorText}>{actionError}</ThemedText>}
 
         <ThemedView style={styles.card}>
+          <Field label="행사명" value={detail.event_name ?? '-'} />
+          <Field label="행사구분" value={detail.event_category_name ?? '-'} />
           <Field label="학교/기관명" value={detail.institution_name ?? '-'} />
           <Field label="주소" value={detail.institution_address ?? '-'} />
+          <Field label="대상학년" value={detail.target_grade ?? '-'} />
+          <Field label="교시" value={formatEventSchedules(detail.event_schedules)} />
+          <LinkField label="학교 배치도" url={detail.floor_map_url} />
+          <Field label="엘리베이터 유무" value={detail.has_elevator ?? '-'} />
+          <Field label="주차 및 엘리베이터" value={detail.parking_note ?? '-'} />
           <Field label="노트북/Wi-Fi" value={detail.laptop_wifi_note ?? '-'} />
           <Field label="실내화 위치" value={detail.indoor_shoes_note ?? '-'} />
-          <Field label="주차/엘리베이터" value={detail.parking_note ?? '-'} />
-          <Field label="기관아이디/검증번호" value={detail.crime_check_info ?? '-'} />
+          <Field label="범죄경력 진행방식" value={detail.crime_check_method ?? '-'} />
+          <Field label="범죄경력회보서" value={detail.crime_check_info ?? '-'} />
           <Field label="학생변경 여부" value={detail.student_rotation ?? '-'} />
           <Field label="공지사항" value={detail.notice ?? '-'} />
-          <Field label="메모" value={detail.memo ?? '-'} />
+          {noticeFiles.length > 0 && (
+            <View style={styles.field}>
+              <ThemedText style={styles.fieldLabel}>공지사항 첨부파일</ThemedText>
+              <View style={styles.fieldValue}>
+                {noticeFiles.map((file, i) => (
+                  <TouchableOpacity key={file.id} onPress={() => Linking.openURL(file.url)}>
+                    <ThemedText style={styles.linkText} numberOfLines={1}>
+                      첨부파일 {i + 1}
+                    </ThemedText>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+          <Field label="학교요청사항(행사 전체)" value={detail.school_request_note ?? '-'} />
         </ThemedView>
 
         <ThemedView style={styles.card}>
@@ -364,6 +412,21 @@ function Field({ label, value }: { label: string; value: string }) {
   );
 }
 
+function LinkField({ label, url }: { label: string; url: string | null }) {
+  return (
+    <View style={styles.field}>
+      <ThemedText style={styles.fieldLabel}>{label}</ThemedText>
+      {url ? (
+        <TouchableOpacity style={styles.fieldValue} onPress={() => Linking.openURL(url)}>
+          <ThemedText style={styles.linkText}>파일 보기</ThemedText>
+        </TouchableOpacity>
+      ) : (
+        <ThemedText style={styles.fieldValue}>-</ThemedText>
+      )}
+    </View>
+  );
+}
+
 function Checkbox({
   label,
   checked,
@@ -444,6 +507,11 @@ const styles = StyleSheet.create({
   fieldValue: {
     flex: 1,
     fontSize: 14,
+  },
+  linkText: {
+    fontSize: 14,
+    color: '#0a7ea4',
+    textDecorationLine: 'underline',
   },
   checkboxColumn: {
     flex: 1,

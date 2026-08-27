@@ -48,9 +48,12 @@ export type Database = {
           id: string
           is_authenticated: boolean
           is_comm: boolean
+          is_contract: boolean
           is_deleted: boolean
+          is_recruit: boolean
           is_sales: boolean
           is_super: boolean
+          is_supplies: boolean
           name: string
           phone: string | null
         }
@@ -62,9 +65,12 @@ export type Database = {
           id: string
           is_authenticated?: boolean
           is_comm?: boolean
+          is_contract?: boolean
           is_deleted?: boolean
+          is_recruit?: boolean
           is_sales?: boolean
           is_super?: boolean
+          is_supplies?: boolean
           name: string
           phone?: string | null
         }
@@ -76,9 +82,12 @@ export type Database = {
           id?: string
           is_authenticated?: boolean
           is_comm?: boolean
+          is_contract?: boolean
           is_deleted?: boolean
+          is_recruit?: boolean
           is_sales?: boolean
           is_super?: boolean
+          is_supplies?: boolean
           name?: string
           phone?: string | null
         }
@@ -197,6 +206,184 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "ppt_templates"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_dates: {
+        Row: {
+          contract_status: Database["public"]["Enums"]["contract_status"] | null
+          crime_check_delivered:
+            | Database["public"]["Enums"]["crime_check_delivered_status"]
+            | null
+          crime_check_notified: boolean | null
+          date: string
+          event_check_status: number
+          event_id: string
+          field_admin_ids: string[] | null
+          group_chat_status: string | null
+          group_id: string | null
+          id: string
+          institution_request_delivered: boolean | null
+          photo_sent: boolean | null
+          pre_notice_sent: boolean
+          remarks: string | null
+          supplies_admin_id: string | null
+          supplies_status: Database["public"]["Enums"]["supplies_status"] | null
+        }
+        Insert: {
+          contract_status?:
+            | Database["public"]["Enums"]["contract_status"]
+            | null
+          crime_check_delivered?:
+            | Database["public"]["Enums"]["crime_check_delivered_status"]
+            | null
+          crime_check_notified?: boolean | null
+          date: string
+          event_check_status?: number
+          event_id: string
+          field_admin_ids?: string[] | null
+          group_chat_status?: string | null
+          group_id?: string | null
+          id?: string
+          institution_request_delivered?: boolean | null
+          photo_sent?: boolean | null
+          pre_notice_sent?: boolean
+          remarks?: string | null
+          supplies_admin_id?: string | null
+          supplies_status?:
+            | Database["public"]["Enums"]["supplies_status"]
+            | null
+        }
+        Update: {
+          contract_status?:
+            | Database["public"]["Enums"]["contract_status"]
+            | null
+          crime_check_delivered?:
+            | Database["public"]["Enums"]["crime_check_delivered_status"]
+            | null
+          crime_check_notified?: boolean | null
+          date?: string
+          event_check_status?: number
+          event_id?: string
+          field_admin_ids?: string[] | null
+          group_chat_status?: string | null
+          group_id?: string | null
+          id?: string
+          institution_request_delivered?: boolean | null
+          photo_sent?: boolean | null
+          pre_notice_sent?: boolean
+          remarks?: string | null
+          supplies_admin_id?: string | null
+          supplies_status?:
+            | Database["public"]["Enums"]["supplies_status"]
+            | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_dates_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_dates_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mentor_event_row_detail"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_dates_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mentor_invitation_requests"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_dates_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "event_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_dates_supplies_admin_id_fkey"
+            columns: ["supplies_admin_id"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_groups: {
+        Row: {
+          contract_status: Database["public"]["Enums"]["contract_status"] | null
+          created_at: string
+          crime_check_delivered:
+            | Database["public"]["Enums"]["crime_check_delivered_status"]
+            | null
+          crime_check_notified: boolean | null
+          event_id: string
+          id: string
+          institution_request_delivered: boolean | null
+          name: string
+          photo_sent: boolean | null
+          pre_notice_sent: boolean
+        }
+        Insert: {
+          contract_status?:
+            | Database["public"]["Enums"]["contract_status"]
+            | null
+          created_at?: string
+          crime_check_delivered?:
+            | Database["public"]["Enums"]["crime_check_delivered_status"]
+            | null
+          crime_check_notified?: boolean | null
+          event_id: string
+          id?: string
+          institution_request_delivered?: boolean | null
+          name: string
+          photo_sent?: boolean | null
+          pre_notice_sent?: boolean
+        }
+        Update: {
+          contract_status?:
+            | Database["public"]["Enums"]["contract_status"]
+            | null
+          created_at?: string
+          crime_check_delivered?:
+            | Database["public"]["Enums"]["crime_check_delivered_status"]
+            | null
+          crime_check_notified?: boolean | null
+          event_id?: string
+          id?: string
+          institution_request_delivered?: boolean | null
+          name?: string
+          photo_sent?: boolean | null
+          pre_notice_sent?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_groups_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_groups_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mentor_event_row_detail"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_groups_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mentor_invitation_requests"
+            referencedColumns: ["event_id"]
           },
         ]
       }
@@ -540,8 +727,10 @@ export type Database = {
           contact_email: string | null
           contact_name: string | null
           contact_phone: string | null
+          contract_admin_id: string | null
           contract_delivered: boolean
           contract_memo: string | null
+          contract_method: Database["public"]["Enums"]["contract_method"] | null
           contract_status: Database["public"]["Enums"]["contract_status"] | null
           contract_type: Database["public"]["Enums"]["contract_type"] | null
           created_at: string
@@ -588,6 +777,7 @@ export type Database = {
           photo_sent: boolean | null
           pre_notice_sent: boolean
           prep_note: string | null
+          recruit_admin_id: string | null
           recruit_delivered: boolean | null
           recruit_start_date: string | null
           recruit_status: Database["public"]["Enums"]["recruit_status"] | null
@@ -598,6 +788,7 @@ export type Database = {
           school_request_note: string | null
           start_recruit_at: string | null
           student_rotation: string | null
+          supplies_admin_id: string | null
           supplies_status: Database["public"]["Enums"]["supplies_status"] | null
           target_grade: string | null
           teacher_name: string | null
@@ -613,8 +804,12 @@ export type Database = {
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
+          contract_admin_id?: string | null
           contract_delivered?: boolean
           contract_memo?: string | null
+          contract_method?:
+            | Database["public"]["Enums"]["contract_method"]
+            | null
           contract_status?:
             | Database["public"]["Enums"]["contract_status"]
             | null
@@ -663,6 +858,7 @@ export type Database = {
           photo_sent?: boolean | null
           pre_notice_sent?: boolean
           prep_note?: string | null
+          recruit_admin_id?: string | null
           recruit_delivered?: boolean | null
           recruit_start_date?: string | null
           recruit_status?: Database["public"]["Enums"]["recruit_status"] | null
@@ -673,6 +869,7 @@ export type Database = {
           school_request_note?: string | null
           start_recruit_at?: string | null
           student_rotation?: string | null
+          supplies_admin_id?: string | null
           supplies_status?:
             | Database["public"]["Enums"]["supplies_status"]
             | null
@@ -690,8 +887,12 @@ export type Database = {
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
+          contract_admin_id?: string | null
           contract_delivered?: boolean
           contract_memo?: string | null
+          contract_method?:
+            | Database["public"]["Enums"]["contract_method"]
+            | null
           contract_status?:
             | Database["public"]["Enums"]["contract_status"]
             | null
@@ -740,6 +941,7 @@ export type Database = {
           photo_sent?: boolean | null
           pre_notice_sent?: boolean
           prep_note?: string | null
+          recruit_admin_id?: string | null
           recruit_delivered?: boolean | null
           recruit_start_date?: string | null
           recruit_status?: Database["public"]["Enums"]["recruit_status"] | null
@@ -750,6 +952,7 @@ export type Database = {
           school_request_note?: string | null
           start_recruit_at?: string | null
           student_rotation?: string | null
+          supplies_admin_id?: string | null
           supplies_status?:
             | Database["public"]["Enums"]["supplies_status"]
             | null
@@ -761,6 +964,13 @@ export type Database = {
           {
             foreignKeyName: "events_comm_admin_id_fkey"
             columns: ["comm_admin_id"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_contract_admin_id_fkey"
+            columns: ["contract_admin_id"]
             isOneToOne: false
             referencedRelation: "admins"
             referencedColumns: ["id"]
@@ -787,8 +997,22 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "events_recruit_admin_id_fkey"
+            columns: ["recruit_admin_id"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "events_sales_admin_id_fkey"
             columns: ["sales_admin_id"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_supplies_admin_id_fkey"
+            columns: ["supplies_admin_id"]
             isOneToOne: false
             referencedRelation: "admins"
             referencedColumns: ["id"]
@@ -1811,12 +2035,19 @@ export type Database = {
           attendance: boolean | null
           classroom: string | null
           crime_check_info: string | null
+          crime_check_method:
+            | Database["public"]["Enums"]["crime_check_method"]
+            | null
           criminal_background_check: string | null
           dreampia_material_cost: number | null
           end_time: string | null
+          event_category_name: string | null
           event_id: string | null
           event_name: string | null
           event_row_id: string | null
+          event_schedules: Json | null
+          floor_map_url: string | null
+          has_elevator: Database["public"]["Enums"]["elevator_status"] | null
           headcount: number | null
           indoor_shoes_note: string | null
           institution_address: string | null
@@ -1838,10 +2069,12 @@ export type Database = {
           prep_by: Database["public"]["Enums"]["prep_by"] | null
           preparing: boolean | null
           program_name: string | null
+          school_request_note: string | null
           session_headcount: string | null
           start_time: string | null
           student_rotation: string | null
           target: string | null
+          target_grade: string | null
           unit_id: string | null
           unit_title: string | null
         }
@@ -2030,12 +2263,17 @@ export type Database = {
           attendance: boolean
           classroom: string
           crime_check_info: string
+          crime_check_method: Database["public"]["Enums"]["crime_check_method"]
           criminal_background_check: string
           dreampia_material_cost: number
           end_time: string
+          event_category_name: string
           event_id: string
           event_name: string
           event_row_id: string
+          event_schedules: Json
+          floor_map_url: string
+          has_elevator: Database["public"]["Enums"]["elevator_status"]
           headcount: number
           indoor_shoes_note: string
           institution_address: string
@@ -2057,10 +2295,12 @@ export type Database = {
           prep_by: Database["public"]["Enums"]["prep_by"]
           preparing: boolean
           program_name: string
+          school_request_note: string
           session_headcount: string
           start_time: string
           student_rotation: string
           target: string
+          target_grade: string
           unit_id: string
           unit_title: string
         }[]
@@ -2115,6 +2355,7 @@ export type Database = {
     }
     Enums: {
       area: "부산" | "김해" | "울산" | "창원"
+      contract_method: "단일계약" | "공동계약"
       contract_status:
         | "계약 시작 전(전화 예정)"
         | "계약 시작 전(전화 완료)"
@@ -2307,6 +2548,7 @@ export const Constants = {
   public: {
     Enums: {
       area: ["부산", "김해", "울산", "창원"],
+      contract_method: ["단일계약", "공동계약"],
       contract_status: [
         "계약 시작 전(전화 예정)",
         "계약 시작 전(전화 완료)",
