@@ -7,6 +7,7 @@ import { FilePicker } from '@/components/file-picker';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/contexts/auth-context';
+import { getMentorMaterialCost } from '@/lib/material-cost';
 import { supabase } from '@/lib/supabase';
 import { uploadFile, uploadPrivateFile, type PickedFile } from '@/lib/upload-file';
 import type { Database } from '@/types/supabase';
@@ -43,11 +44,15 @@ function hoursUntil(iso: string | null) {
   return (new Date(iso).getTime() - Date.now()) / 3_600_000;
 }
 
-function materialCostText(detail: AnyDetailRow) {
-  if (detail.prep_by === '강사') return formatFee(detail.mentor_material_cost);
-  if (detail.prep_by === '드림피아') return formatFee(detail.dreampia_material_cost);
+// 드림피아 원가(dreampia_material_cost)는 강사에게 노출하지 않는다 — 드림피아 준비분은
+// 항상 0원으로 표시한다. 강사 준비분도 본인이 실제 재료비 입금자일 때만 실제 금액을 보여준다
+// (lib/material-cost.ts의 getMentorMaterialCost와 동일한 원칙 — 정산 화면과 일치시킨다).
+function materialCostText(detail: AnyDetailRow, mentorId?: string) {
+  const myShare = formatFee(getMentorMaterialCost(detail, mentorId));
+  if (detail.prep_by === '강사') return myShare;
+  if (detail.prep_by === '드림피아') return formatFee(0);
   if (detail.prep_by === '모두가능') {
-    return `강사 준비 시 ${formatFee(detail.mentor_material_cost)} / 드림피아 준비 시 ${formatFee(detail.dreampia_material_cost)}`;
+    return `강사 준비 시 ${myShare} / 드림피아 준비 시 ${formatFee(0)}`;
   }
   return '-';
 }
@@ -300,7 +305,7 @@ export default function LectureScheduleDetailScreen() {
               detail.lecture_fee_payer_id ? payerNames[detail.lecture_fee_payer_id] ?? '-' : '-'
             }
           />
-          <Field label="1인당 재료비" value={materialCostText(detail)} />
+          <Field label="1인당 재료비" value={materialCostText(detail, mentorId)} />
           <Field
             label="재료비 입금자명"
             value={

@@ -6,6 +6,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/contexts/auth-context';
+import { getMentorMaterialCost } from '@/lib/material-cost';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/supabase';
 
@@ -36,16 +37,9 @@ function formatDate(iso: string | null) {
   return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일(${WEEKDAY_LABELS[d.getDay()]})`;
 }
 
-// material_fee_payer_id(재료비 입금자)가 본인이면 재료비를 정산받는다. prep_by(누가 준비하는지)와는
-// 별개 개념이라, 실제 정산 대상 판단은 반드시 material_fee_payer_id로 한다.
-function materialCostOf(row: DetailRow, mentorId?: string) {
-  if (!mentorId || row.material_fee_payer_id !== mentorId) return 0;
-  return row.mentor_material_cost ?? 0;
-}
-
 // 합계는 실제 입금액 기준(세후 강의료 + 재료비)으로 계산한다.
 function totalOf(row: DetailRow, mentorId?: string) {
-  return (row.lecture_fee_after_tax ?? 0) + materialCostOf(row, mentorId);
+  return (row.lecture_fee_after_tax ?? 0) + getMentorMaterialCost(row, mentorId);
 }
 
 export default function LectureSettlementScreen() {
@@ -212,7 +206,7 @@ function PeriodRow({
 }
 
 function SettlementCard({ no, row, mentorId }: { no: number; row: DetailRow; mentorId?: string }) {
-  const materialCost = materialCostOf(row, mentorId);
+  const materialCost = getMentorMaterialCost(row, mentorId);
   const total = totalOf(row, mentorId);
   return (
     <ThemedView style={styles.card}>
