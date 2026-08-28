@@ -30,7 +30,7 @@ if (Platform.OS !== 'web') {
 }
 
 function RootNavigator() {
-  const { session, isLoading, mentor, isMentorLoading, isPasswordRecovery } = useAuth();
+  const { session, isLoading, isMentorLoading, isPasswordRecovery } = useAuth();
   const isReady = !isLoading && (!session || !isMentorLoading);
   const router = useRouter();
 
@@ -62,15 +62,18 @@ function RootNavigator() {
     return null;
   }
 
-  const isApprovedMentor = !!session && !isPasswordRecovery && mentor?.is_authenticated === true;
-  const isPendingMentor = !!session && !isPasswordRecovery && !isApprovedMentor;
+  // 관리자 승인(is_authenticated) 여부와 무관하게, 로그인만 하면 앱 화면 전체를 볼 수 있게 한다.
+  // 승인 전/후 차이는 라우팅 단계에서 화면을 통째로 막는 게 아니라, 각 화면 안에서
+  // (섭외 수신 여부 등) 자연스럽게 드러난다 — 앱스토어 심사 시 "승인 전엔 아무 화면도
+  // 못 본다"는 구조가 리뷰 과정에서 기능을 숨긴 것으로 오인받은 적이 있어 이렇게 바꿨다.
+  const isSignedIn = !!session && !isPasswordRecovery;
 
   return (
     <Stack>
       <Stack.Protected guard={!!session && isPasswordRecovery}>
         <Stack.Screen name="reset-password" options={{ headerShown: false }} />
       </Stack.Protected>
-      <Stack.Protected guard={isApprovedMentor}>
+      <Stack.Protected guard={isSignedIn}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         <Stack.Screen name="invitations" options={{ title: '강의요청' }} />
@@ -79,10 +82,6 @@ function RootNavigator() {
         <Stack.Screen name="field-operator-event-detail" options={{ title: '현장운영 상세' }} />
         <Stack.Screen name="lecture-settlement" options={{ title: '강의 정산' }} />
         <Stack.Screen name="profile-edit" options={{ title: '회원정보 수정' }} />
-      </Stack.Protected>
-      <Stack.Protected guard={isPendingMentor}>
-        <Stack.Screen name="pending-approval" options={{ headerShown: false }} />
-        <Stack.Screen name="profile-setup" options={{ title: '추가 정보 입력' }} />
       </Stack.Protected>
       <Stack.Protected guard={!session}>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />

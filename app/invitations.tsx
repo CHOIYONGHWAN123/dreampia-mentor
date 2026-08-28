@@ -104,7 +104,7 @@ function groupRows(rows: RequestRow[]): InvitationGroup[] {
 }
 
 export default function InvitationsScreen() {
-  const { session } = useAuth();
+  const { session, mentor } = useAuth();
   const myMentorId = session?.user.id;
   const card = useThemeColor({}, 'card');
   const border = useThemeColor({}, 'border');
@@ -212,6 +212,11 @@ export default function InvitationsScreen() {
         ListHeaderComponent={
           <ThemedView style={styles.header}>
             <ThemedText type="title">강의요청</ThemedText>
+            {mentor && !mentor.is_authenticated && (
+              <ThemedText style={[styles.errorText, { color: warning }]}>
+                관리자 승인이 완료되어야 강의요청을 받을 수 있어요.
+              </ThemedText>
+            )}
             {loadError && <ThemedText style={[styles.errorText, { color: danger }]}>{loadError}</ThemedText>}
             {actionError && (
               <ThemedText style={[styles.errorText, { color: danger }]}>{actionError}</ThemedText>

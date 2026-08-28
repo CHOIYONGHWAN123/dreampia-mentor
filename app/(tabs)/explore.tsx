@@ -37,6 +37,21 @@ export default function MyPageScreen() {
         )}
       </ThemedView>
 
+      {mentor && !mentor.is_authenticated && (
+        <Link href="/profile-edit" asChild>
+          <TouchableOpacity style={styles.noticeBox}>
+            <ThemedText type="defaultSemiBold" style={styles.noticeTitle}>
+              추가 정보를 입력해주세요
+            </ThemedText>
+            <ThemedText style={styles.noticeBody}>
+              강사료 정산 계좌, 신분증 등 추가 정보를 입력해야 관리자 승인이 진행돼요. 승인이
+              완료되면 강의요청 알림을 받고 수락할 수 있어요.
+            </ThemedText>
+            <ThemedText type="link">회원정보 수정에서 입력하기 →</ThemedText>
+          </TouchableOpacity>
+        </Link>
+      )}
+
       <Link href="/invitations" asChild>
         <TouchableOpacity style={styles.menuItem}>
           <ThemedText type="defaultSemiBold">강의요청</ThemedText>
@@ -108,6 +123,21 @@ const styles = StyleSheet.create({
   },
   pending: {
     color: '#c77700',
+  },
+  noticeBox: {
+    backgroundColor: '#fff8e1',
+    borderRadius: 8,
+    padding: 12,
+    gap: 4,
+    marginBottom: 16,
+  },
+  noticeTitle: {
+    color: '#8a5a00',
+  },
+  noticeBody: {
+    color: '#8a5a00',
+    fontSize: 13,
+    lineHeight: 18,
   },
   menuItem: {
     flexDirection: 'row',

@@ -19,6 +19,8 @@ import { useAuth } from '@/contexts/auth-context';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { supabase } from '@/lib/supabase';
 
+const RESEND_COOLDOWN_SECONDS = 60;
+
 type VerifiedIdentity = { name: string; phone: string; ci: string | null };
 
 type Terms = {
@@ -67,9 +69,17 @@ export default function SignupScreen() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [emailConfirmationSent, setEmailConfirmationSent] = useState(false);
+  const [code, setCode] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const [terms, setTerms] = useState<Terms | null>(null);
   const [modalField, setModalField] = useState<'service_terms' | 'privacy_policy' | null>(null);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => setResendCooldown((s) => Math.max(s - 1, 0)), 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
 
   useEffect(() => {
     supabase
@@ -147,6 +157,7 @@ export default function SignupScreen() {
       });
       if (requiresEmailConfirmation) {
         setEmailConfirmationSent(true);
+        setResendCooldown(RESEND_COOLDOWN_SECONDS);
       } else {
         router.replace('/');
       }
@@ -157,15 +168,68 @@ export default function SignupScreen() {
     }
   };
 
+  const verifyCode = async () => {
+    if (!code.trim()) {
+      setError('인증번호를 입력해주세요.');
+      return;
+    }
+    setError(null);
+    setSubmitting(true);
+    try {
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        email: email.trim(),
+        token: code.trim(),
+        type: 'signup',
+      });
+      if (verifyError) throw verifyError;
+      // 인증에 성공하면 세션이 생기면서 앱이 자동으로 다음 화면으로 이동한다.
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '인증에 실패했습니다.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const resendCode = async () => {
+    setError(null);
+    setSubmitting(true);
+    try {
+      const { error: resendError } = await supabase.auth.resend({
+        type: 'signup',
+        email: email.trim(),
+      });
+      if (resendError) throw resendError;
+      setResendCooldown(RESEND_COOLDOWN_SECONDS);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '재전송에 실패했습니다.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (emailConfirmationSent) {
     return (
-      <AuthScreen title="이메일을 확인해주세요" subtitle="인증 후 로그인할 수 있어요">
+      <AuthScreen title="이메일을 확인해주세요" subtitle="인증번호를 입력하면 가입이 완료돼요">
         <ThemedView style={[styles.card, styles.confirmCard, { backgroundColor: card, boxShadow: Shadows.raised }]}>
           <ThemedText style={{ lineHeight: 22 }}>
-            {email.trim()}로 인증 메일을 보냈습니다.{'\n'}메일함에서 인증 링크를 눌러주시면 가입이
-            완료됩니다.{'\n'}(스팸함도 확인해주세요)
+            {email.trim()}로 인증번호를 보냈습니다.{'\n'}메일함에서 확인한 인증번호를 아래에
+            입력해주세요.{'\n'}(스팸함도 확인해주세요)
           </ThemedText>
-          <Button title="로그인 화면으로" onPress={() => router.replace('/login')} style={styles.button} />
+          <AuthTextField
+            label="인증번호"
+            value={code}
+            onChangeText={setCode}
+            placeholder="인증번호 입력"
+            keyboardType="number-pad"
+            maxLength={10}
+          />
+          {error && <ThemedText style={[styles.error, { color: danger }]}>{error}</ThemedText>}
+          <Button title="확인" onPress={verifyCode} loading={submitting} style={styles.button} />
+          <TouchableOpacity onPress={resendCode} disabled={resendCooldown > 0 || submitting}>
+            <ThemedText type="link" style={resendCooldown > 0 && styles.linkDisabled}>
+              {resendCooldown > 0 ? `인증번호 재전송 (${resendCooldown}초)` : '인증번호 재전송'}
+            </ThemedText>
+          </TouchableOpacity>
         </ThemedView>
       </AuthScreen>
     );
@@ -373,6 +437,9 @@ const styles = StyleSheet.create({
   },
   error: {
     fontSize: 13,
+  },
+  linkDisabled: {
+    opacity: 0.5,
   },
   footer: {
     flexDirection: 'row',
