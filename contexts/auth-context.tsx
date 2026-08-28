@@ -72,7 +72,32 @@ export function AuthProvider({ children }: PropsWithChildren) {
       .select('id, name, phone, is_authenticated, mentor_unique_code')
       .eq('id', session.user.id)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(async ({ data }) => {
+        if (isCancelled) return;
+
+        // 드물게 on_mentor_signup 트리거가 mentors 행을 못 만드는 경우가 있다(예: 미확인
+        // 이메일로 회원가입을 재시도하면 auth.users가 insert가 아니라 update되어 트리거가
+        // 안 걸림). 이 경우 로그인 시점에 본인 행을 셀프로 채워 넣어 복구한다 — mentors
+        // 테이블의 "본인 mentors 셀프 등록" RLS 정책(관리자 겸직용으로 추가됐지만 조건이
+        // 일반적이라 그대로 재사용 가능)을 그대로 이용한다.
+        if (!data && session.user.user_metadata?.account_type === 'mentor') {
+          const meta = session.user.user_metadata;
+          const { data: healed } = await supabase
+            .from('mentors')
+            .insert({
+              id: session.user.id,
+              mentor_unique_code: '',
+              name: typeof meta.name === 'string' && meta.name ? meta.name : '미입력',
+              phone: typeof meta.phone === 'string' ? meta.phone : null,
+              is_authenticated: false,
+              terms_agreed_at: new Date().toISOString(),
+              terms_version_id: typeof meta.terms_version_id === 'string' ? meta.terms_version_id : null,
+            })
+            .select('id, name, phone, is_authenticated, mentor_unique_code')
+            .single();
+          data = healed ?? null;
+        }
+
         if (!isCancelled) {
           setMentor(data);
           setIsMentorLoading(false);
