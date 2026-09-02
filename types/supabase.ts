@@ -1533,6 +1533,7 @@ export type Database = {
           created_at: string
           criminal_record_consent_file_url: string | null
           detail_address: string | null
+          has_vehicle: boolean | null
           id: string
           id_card_file_url: string | null
           id_number: string | null
@@ -1547,6 +1548,7 @@ export type Database = {
           terms_agreed_at: string | null
           terms_version_id: string | null
           user_id: string | null
+          vehicle_info: string | null
         }
         Insert: {
           address?: string | null
@@ -1560,6 +1562,7 @@ export type Database = {
           created_at?: string
           criminal_record_consent_file_url?: string | null
           detail_address?: string | null
+          has_vehicle?: boolean | null
           id?: string
           id_card_file_url?: string | null
           id_number?: string | null
@@ -1574,6 +1577,7 @@ export type Database = {
           terms_agreed_at?: string | null
           terms_version_id?: string | null
           user_id?: string | null
+          vehicle_info?: string | null
         }
         Update: {
           address?: string | null
@@ -1587,6 +1591,7 @@ export type Database = {
           created_at?: string
           criminal_record_consent_file_url?: string | null
           detail_address?: string | null
+          has_vehicle?: boolean | null
           id?: string
           id_card_file_url?: string | null
           id_number?: string | null
@@ -1601,6 +1606,7 @@ export type Database = {
           terms_agreed_at?: string | null
           terms_version_id?: string | null
           user_id?: string | null
+          vehicle_info?: string | null
         }
         Relationships: [
           {

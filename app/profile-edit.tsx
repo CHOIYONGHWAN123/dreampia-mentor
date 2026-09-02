@@ -47,6 +47,8 @@ export default function ProfileEditScreen() {
   const textMuted = useThemeColor({}, 'textMuted');
   const border = useThemeColor({}, 'border');
   const danger = useThemeColor({}, 'danger');
+  const primary = useThemeColor({}, 'primary');
+  const onPrimary = useThemeColor({}, 'onPrimary');
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -69,6 +71,8 @@ export default function ProfileEditScreen() {
   });
   const [signature, setSignature] = useState<string | null>(null);
   const [availableAreas, setAvailableAreas] = useState<string[]>([]);
+  const [hasVehicle, setHasVehicle] = useState<boolean | null>(null);
+  const [vehicleInfo, setVehicleInfo] = useState('');
   const [fieldSections, setFieldSections] = useState<FieldSectionState[]>([createFieldSection()]);
 
   const [newPassword, setNewPassword] = useState('');
@@ -112,6 +116,8 @@ export default function ProfileEditScreen() {
     setAddress(mentor.address ?? '');
     setDetailAddress(mentor.detail_address ?? '');
     setAvailableAreas(mentor.available_areas ?? []);
+    setHasVehicle(mentor.has_vehicle ?? null);
+    setVehicleInfo(mentor.vehicle_info ?? '');
     setExistingConsentFileUrls({
       criminalRecordConsent: mentor.criminal_record_consent_file_url ?? null,
       adminInfoConsent: mentor.admin_info_consent_file_url ?? null,
@@ -194,6 +200,14 @@ export default function ProfileEditScreen() {
       setError('통장사본을 첨부해주세요.');
       return;
     }
+    if (hasVehicle === null) {
+      setError('차량보유여부를 선택해주세요.');
+      return;
+    }
+    if (hasVehicle && !vehicleInfo.trim()) {
+      setError('차량정보를 입력해주세요.');
+      return;
+    }
     const hasExistingConsent = Object.values(existingConsentFileUrls).some(Boolean);
     if (!signature && !hasExistingConsent) {
       setError('동의서에 서명해주세요.');
@@ -239,6 +253,8 @@ export default function ProfileEditScreen() {
           bankbook_file_url: bankbookFileUrl,
           belongs_to: belongsToId || null,
           available_areas: availableAreas.length ? availableAreas : null,
+          has_vehicle: hasVehicle,
+          vehicle_info: hasVehicle ? vehicleInfo.trim() : null,
         })
         .eq('id', selfId);
       if (updateError) throw new Error(updateError.message);
@@ -496,6 +512,38 @@ export default function ProfileEditScreen() {
             <AreaSelector value={availableAreas} onChange={setAvailableAreas} />
           </ThemedView>
 
+          <ThemedView style={styles.field}>
+            <ThemedText style={[styles.label, { color: textMuted }]}>차량보유여부</ThemedText>
+            <ThemedView style={styles.oxRow}>
+              {([true, false] as const).map((v) => {
+                const checked = hasVehicle === v;
+                return (
+                  <TouchableOpacity
+                    key={String(v)}
+                    onPress={() => setHasVehicle(v)}
+                    style={[
+                      styles.oxChip,
+                      { borderColor: border },
+                      checked && { backgroundColor: primary, borderColor: primary },
+                    ]}>
+                    <ThemedText style={checked ? { color: onPrimary, fontWeight: '600' } : undefined}>
+                      {v ? 'O' : 'X'}
+                    </ThemedText>
+                  </TouchableOpacity>
+                );
+              })}
+            </ThemedView>
+          </ThemedView>
+
+          {hasVehicle && (
+            <AuthTextField
+              label="차량정보"
+              value={vehicleInfo}
+              onChangeText={setVehicleInfo}
+              placeholder="쏘나타 / 흰색 / 123가 4567"
+            />
+          )}
+
           <ThemedView style={styles.programsSection}>
             <ThemedText type="subtitle">프로그램 (선택)</ThemedText>
             {fieldSections.map((section) => (
@@ -600,6 +648,18 @@ const styles = StyleSheet.create({
   },
   bankNumber: {
     flex: 1,
+  },
+  oxRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  oxChip: {
+    width: 48,
+    height: 40,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   programsSection: {
     gap: Spacing.sm + 4,
