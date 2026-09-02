@@ -55,6 +55,7 @@ export function LevelFileInputs({
                 ]}
                 templateUrl={fieldFallbackUrl ?? null}
                 templateFilename="드림피아_PPT_양식.pptx"
+                maxFileSizeMB={300}
               />
             </ThemedView>
             <ThemedView style={styles.fileCol}>
@@ -65,6 +66,7 @@ export function LevelFileInputs({
                 onChange={(file) => onProfileChange(l.schoolLevel, file)}
                 templateAsset={require('@/assets/templates/profile_template.hwp')}
                 templateFilename="드림피아_프로필_양식.hwp"
+                maxFileSizeMB={300}
               />
             </ThemedView>
           </ThemedView>

@@ -1,5 +1,5 @@
 import * as DocumentPicker from 'expo-document-picker';
-import { Linking, StyleSheet, TouchableOpacity } from 'react-native';
+import { Alert, Linking, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -15,6 +15,7 @@ export function FilePicker({
   templateUrl,
   templateFilename,
   privateExisting = false,
+  maxFileSizeMB,
 }: {
   file: PickedFile | null;
   // 회원정보 수정 화면처럼 이미 업로드된 파일이 있을 때, 새로 고르지 않으면 이 파일을 유지한다는 표시용.
@@ -30,6 +31,10 @@ export function FilePicker({
   // 신분증 사진처럼 private 버킷에 저장되는 파일용. true면 existingFileUrl은 경로일 뿐이라
   // 클릭해서 바로 열 수 없으므로 "보기" 링크를 숨긴다.
   privateExisting?: boolean;
+  // ppt-file/profile-file 버킷은 Supabase 버킷 자체에 용량 제한이 없어, 큰 파일이
+  // 프로젝트 전역 Storage 업로드 상한(대시보드 설정)에 걸려 저장 시점에야 실패하는 문제가 있었다.
+  // 선택 즉시 걸러내고 안내 문구도 같이 보여주기 위한 값(MB 단위).
+  maxFileSizeMB?: number;
 }) {
   const handlePick = async () => {
     const result = await DocumentPicker.getDocumentAsync({
@@ -38,6 +43,13 @@ export function FilePicker({
     });
     if (result.canceled || !result.assets[0]) return;
     const asset = result.assets[0];
+    if (maxFileSizeMB && asset.size && asset.size > maxFileSizeMB * 1024 * 1024) {
+      Alert.alert(
+        '파일 용량 초과',
+        `${maxFileSizeMB}MB 이하 파일만 업로드할 수 있습니다. PDF로 변환해서 올려주세요.`
+      );
+      return;
+    }
     onChange({ uri: asset.uri, name: asset.name, mimeType: asset.mimeType });
   };
 
@@ -82,6 +94,11 @@ export function FilePicker({
           <ThemedText style={styles.placeholder}>파일 선택</ThemedText>
         )}
       </TouchableOpacity>
+      {maxFileSizeMB && (
+        <ThemedText style={styles.sizeHint}>
+          {maxFileSizeMB}MB 이상은 업로드되지 않습니다. PDF로 변환해서 올려주세요.
+        </ThemedText>
+      )}
     </ThemedView>
   );
 }
@@ -92,6 +109,10 @@ const styles = StyleSheet.create({
   },
   templateLink: {
     fontSize: 12,
+  },
+  sizeHint: {
+    fontSize: 11,
+    opacity: 0.6,
   },
   dropZone: {
     flexDirection: 'row',
