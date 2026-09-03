@@ -36,6 +36,22 @@ const CANVAS_HTML = `
         ctx.lineCap = 'round';
         ctx.strokeStyle = '#1a1a1a';
 
+        // 서명은 굵은 선 몇 개뿐이라 고해상도가 필요 없다. 이 캔버스가 window.innerWidth/
+        // innerHeight 기준이라 기기에 따라 원본 해상도가 매우 커질 수 있는데, 그대로 보내면
+        // 서버(generate-agreement-pdf)가 문서 3개에 매번 새로 임베드하며 CPU 시간을 다 써서
+        // "CPU Time exceeded"로 죽는 사례가 있었다 — 전송 직전에 항상 이 크기 이하로 맞춘다.
+        const MAX_EXPORT_WIDTH = 800;
+        const MAX_EXPORT_HEIGHT = 300;
+        function exportResizedPng(source) {
+          const scale = Math.min(1, MAX_EXPORT_WIDTH / source.width, MAX_EXPORT_HEIGHT / source.height);
+          if (scale >= 1) return source.toDataURL('image/png');
+          const out = document.createElement('canvas');
+          out.width = Math.round(source.width * scale);
+          out.height = Math.round(source.height * scale);
+          out.getContext('2d').drawImage(source, 0, 0, out.width, out.height);
+          return out.toDataURL('image/png');
+        }
+
         let drawing = false;
 
         function pos(e) {
@@ -59,7 +75,7 @@ const CANVAS_HTML = `
           if (!drawing) return;
           drawing = false;
           window.ReactNativeWebView.postMessage(
-            JSON.stringify({ type: 'signed', dataUrl: canvas.toDataURL('image/png') })
+            JSON.stringify({ type: 'signed', dataUrl: exportResizedPng(canvas) })
           );
         }
         canvas.addEventListener('touchstart', start, { passive: true });

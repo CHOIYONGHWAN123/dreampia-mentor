@@ -5,6 +5,23 @@ import { ThemedText } from '@/components/themed-text';
 
 const HEIGHT = 160;
 
+// 서명은 어차피 굵은 선 몇 개뿐이라 고해상도가 필요 없다. devicePixelRatio가 높은
+// 데스크톱/큰 화면에서 캔버스 원본 해상도가 그대로 나가면 서버(generate-agreement-pdf)가
+// 이 PNG를 문서 3개에 매번 새로 임베드하면서 CPU 시간을 다 써버려 "CPU Time exceeded"로
+// 죽는 사례가 있었다 — 전송 직전에 항상 이 크기 이하로 맞춘다.
+const MAX_EXPORT_WIDTH = 800;
+const MAX_EXPORT_HEIGHT = 300;
+
+function exportResizedPng(source: HTMLCanvasElement): string {
+  const scale = Math.min(1, MAX_EXPORT_WIDTH / source.width, MAX_EXPORT_HEIGHT / source.height);
+  if (scale >= 1) return source.toDataURL('image/png');
+  const out = document.createElement('canvas');
+  out.width = Math.round(source.width * scale);
+  out.height = Math.round(source.height * scale);
+  out.getContext('2d')!.drawImage(source, 0, 0, out.width, out.height);
+  return out.toDataURL('image/png');
+}
+
 // 웹 전용 구현 (네이티브는 signature-pad.native.tsx가 대신 로드된다).
 // react-native-web에서 View의 ref는 실제 DOM 엘리먼트를 가리키므로, 그 안에
 // <canvas>를 명령형으로 붙여서 pointer 이벤트로 그린다.
@@ -59,7 +76,7 @@ export function SignaturePad({ onChange }: { onChange: (base64Png: string | null
     const handlePointerUp = () => {
       if (!drawingRef.current) return;
       drawingRef.current = false;
-      onChangeRef.current(canvas.toDataURL('image/png').split(',')[1]);
+      onChangeRef.current(exportResizedPng(canvas).split(',')[1]);
     };
 
     canvas.addEventListener('pointerdown', handlePointerDown);
