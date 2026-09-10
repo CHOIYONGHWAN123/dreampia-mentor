@@ -152,7 +152,8 @@ export default function InvitationsScreen() {
 
   const runAction = async (
     key: string,
-    action: () => PromiseLike<{ error: { message: string } | null }>
+    action: () => PromiseLike<{ error: { message: string } | null }>,
+    successMessage?: string
   ) => {
     setActionError(null);
     setActingKey(key);
@@ -163,19 +164,27 @@ export default function InvitationsScreen() {
       return;
     }
     load();
+    if (successMessage) {
+      Alert.alert('강의 일정 확정', successMessage);
+    }
   };
 
   const acceptRow = (invitationMentorId: string, eventRowId: string) =>
-    runAction(eventRowId, () =>
-      supabase.rpc('accept_invitation_event_row', {
-        p_invitation_mentor_id: invitationMentorId,
-        p_event_row_id: eventRowId,
-      })
+    runAction(
+      eventRowId,
+      () =>
+        supabase.rpc('accept_invitation_event_row', {
+          p_invitation_mentor_id: invitationMentorId,
+          p_event_row_id: eventRowId,
+        }),
+      '강의 일정이 확정되었습니다. 마이페이지-강의 일정에서 확인해주세요.'
     );
 
   const acceptAll = (invitationMentorId: string) =>
-    runAction(`${invitationMentorId}-all`, () =>
-      supabase.rpc('accept_invitation_all', { p_invitation_mentor_id: invitationMentorId })
+    runAction(
+      `${invitationMentorId}-all`,
+      () => supabase.rpc('accept_invitation_all', { p_invitation_mentor_id: invitationMentorId }),
+      '강의 일정이 확정되었습니다. 마이페이지-강의 일정에서 확인해주세요.'
     );
 
   const declineInvitation = (invitationMentorId: string) => {
