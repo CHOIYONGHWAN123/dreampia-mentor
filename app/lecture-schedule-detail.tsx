@@ -358,6 +358,7 @@ export default function LectureScheduleDetailScreen() {
               detail.material_fee_payer_id ? payerNames[detail.material_fee_payer_id] ?? '-' : '-'
             }
           />
+          <Field label="특이사항" value={detail.remarks ?? '-'} />
 
           <View style={styles.uploadSection}>
             <ThemedText type="defaultSemiBold">회보서</ThemedText>
