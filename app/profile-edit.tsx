@@ -2,7 +2,6 @@ import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -23,6 +22,7 @@ import { MentorCodeSearch } from '@/components/mentor-code-search';
 import { SelectField } from '@/components/select-field';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useToast } from '@/components/toast';
 import { BANK_OPTIONS } from '@/constants/banks';
 import { Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/auth-context';
@@ -40,6 +40,7 @@ import { type PickedFile, uploadFile, uploadPrivateFile } from '@/lib/upload-fil
 
 export default function ProfileEditScreen() {
   const router = useRouter();
+  const { showToast } = useToast();
   const { session } = useAuth();
   const selfId = session!.user.id;
   const { catalog, loading: catalogLoading } = useProgramCatalog();
@@ -184,42 +185,47 @@ export default function ProfileEditScreen() {
   };
 
   const handleSubmit = async () => {
+    const fail = (message: string) => {
+      setError(message);
+      showToast(message, 'error');
+    };
+
     if (!name.trim() || !phone.trim()) {
-      setError('이름과 연락처를 입력해주세요.');
+      fail('이름과 연락처를 입력해주세요.');
       return;
     }
     if (!idNumber.trim() || !address.trim() || !bankName || !bankAccountNumber.trim()) {
-      setError('주민번호, 주소, 계좌번호는 필수입니다.');
+      fail('주민번호, 주소, 계좌번호는 필수입니다.');
       return;
     }
     if (!idCardFile && !existingIdCardFileUrl) {
-      setError('신분증 사진을 첨부해주세요.');
+      fail('신분증 사진을 첨부해주세요.');
       return;
     }
     if (!bankbookFile && !existingBankbookFileUrl) {
-      setError('통장사본을 첨부해주세요.');
+      fail('통장사본을 첨부해주세요.');
       return;
     }
     if (hasVehicle === null) {
-      setError('차량보유여부를 선택해주세요.');
+      fail('차량보유여부를 선택해주세요.');
       return;
     }
     if (hasVehicle && !vehicleInfo.trim()) {
-      setError('차량정보를 입력해주세요.');
+      fail('차량정보를 입력해주세요.');
       return;
     }
     const hasExistingConsent = Object.values(existingConsentFileUrls).some(Boolean);
     if (!signature && !hasExistingConsent) {
-      setError('동의서에 서명해주세요.');
+      fail('동의서에 서명해주세요.');
       return;
     }
     if (newPassword || newPasswordConfirm) {
       if (newPassword.length < 6) {
-        setError('새 비밀번호는 6자 이상이어야 합니다.');
+        fail('새 비밀번호는 6자 이상이어야 합니다.');
         return;
       }
       if (newPassword !== newPasswordConfirm) {
-        setError('새 비밀번호가 일치하지 않습니다.');
+        fail('새 비밀번호가 일치하지 않습니다.');
         return;
       }
     }
@@ -363,9 +369,10 @@ export default function ProfileEditScreen() {
 
       setNewPassword('');
       setNewPasswordConfirm('');
-      Alert.alert('저장되었습니다.', undefined, [{ text: '확인', onPress: () => router.back() }]);
+      showToast('저장되었습니다.');
+      router.back();
     } catch (e) {
-      setError(e instanceof Error ? e.message : '저장에 실패했습니다.');
+      fail(e instanceof Error ? e.message : '저장에 실패했습니다.');
     } finally {
       setSubmitting(false);
     }

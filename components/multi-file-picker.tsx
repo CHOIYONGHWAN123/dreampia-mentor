@@ -4,6 +4,7 @@ import { Linking, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useToast } from '@/components/toast';
 import { supabase } from '@/lib/supabase';
 import type { PickedFile } from '@/lib/upload-file';
 
@@ -25,6 +26,7 @@ export function MultiFilePicker({
   mimeTypes?: string[];
 }) {
   const [viewingIndex, setViewingIndex] = useState<number | null>(null);
+  const { showToast } = useToast();
 
   const handleAdd = async () => {
     const result = await DocumentPicker.getDocumentAsync({
@@ -41,7 +43,10 @@ export function MultiFilePicker({
     setViewingIndex(index);
     try {
       const { data, error } = await supabase.storage.from(bucket).createSignedUrl(existingFileUrls[index], 60 * 5);
-      if (error || !data) return;
+      if (error || !data) {
+        showToast('파일을 불러오지 못했습니다.', 'error');
+        return;
+      }
       Linking.openURL(data.signedUrl);
     } finally {
       setViewingIndex(null);

@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FilePicker } from '@/components/file-picker';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useToast } from '@/components/toast';
 import { useAuth } from '@/contexts/auth-context';
 import { getMentorMaterialCost } from '@/lib/material-cost';
 import { supabase } from '@/lib/supabase';
@@ -76,6 +77,7 @@ export default function LectureScheduleDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session } = useAuth();
   const mentorId = session?.user.id;
+  const { showToast } = useToast();
 
   const [detail, setDetail] = useState<AnyDetailRow | null>(null);
   const [photos, setPhotos] = useState<EventPhoto[]>([]);
@@ -173,7 +175,10 @@ export default function LectureScheduleDetailScreen() {
     if (error) {
       setDetail((d) => (d ? { ...d, preparing: !next } : d));
       setActionError(error.message);
+      showToast(error.message, 'error');
+      return;
     }
+    showToast('행사준비가 저장되었습니다.');
   };
 
   const toggleAttendance = async () => {
@@ -184,7 +189,10 @@ export default function LectureScheduleDetailScreen() {
     if (error) {
       setDetail((d) => (d ? { ...d, attendance: !next } : d));
       setActionError(error.message);
+      showToast(error.message, 'error');
+      return;
     }
+    showToast('출석이 저장되었습니다.');
   };
 
   const handleCriminalFile = async (file: PickedFile | null) => {
@@ -199,8 +207,11 @@ export default function LectureScheduleDetailScreen() {
         .eq('id', id);
       if (error) throw new Error(error.message);
       setDetail((d) => (d ? { ...d, criminal_background_check: path } : d));
+      showToast('회보서가 등록되었습니다.');
     } catch (e) {
-      setActionError(e instanceof Error ? e.message : '회보서 업로드에 실패했습니다.');
+      const message = e instanceof Error ? e.message : '회보서 업로드에 실패했습니다.';
+      setActionError(message);
+      showToast(message, 'error');
     } finally {
       setUploadingCriminal(false);
     }
@@ -219,8 +230,11 @@ export default function LectureScheduleDetailScreen() {
         .single();
       if (error) throw new Error(error.message);
       setPhotos((prev) => [...prev, data]);
+      showToast('사진이 등록되었습니다.');
     } catch (e) {
-      setActionError(e instanceof Error ? e.message : '사진 업로드에 실패했습니다.');
+      const message = e instanceof Error ? e.message : '사진 업로드에 실패했습니다.';
+      setActionError(message);
+      showToast(message, 'error');
     } finally {
       setUploadingPhoto(false);
     }
@@ -231,9 +245,11 @@ export default function LectureScheduleDetailScreen() {
     const { error } = await supabase.from('event_photos').delete().eq('id', photoId);
     if (error) {
       setActionError(error.message);
+      showToast(error.message, 'error');
       return;
     }
     setPhotos((prev) => prev.filter((p) => p.id !== photoId));
+    showToast('사진을 삭제했습니다.');
   };
 
   if (loading) {

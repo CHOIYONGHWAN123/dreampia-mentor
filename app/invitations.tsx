@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useToast } from '@/components/toast';
 import { Radius, Shadows, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/auth-context';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -115,6 +116,7 @@ export default function InvitationsScreen() {
   const warningMuted = useThemeColor({}, 'warningMuted');
   const surface = useThemeColor({}, 'surface');
   const primary = useThemeColor({}, 'primary');
+  const { showToast } = useToast();
 
   const [rows, setRows] = useState<RequestRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -153,7 +155,7 @@ export default function InvitationsScreen() {
   const runAction = async (
     key: string,
     action: () => PromiseLike<{ error: { message: string } | null }>,
-    successMessage?: string
+    options?: { alertMessage?: string; toastMessage?: string }
   ) => {
     setActionError(null);
     setActingKey(key);
@@ -161,11 +163,15 @@ export default function InvitationsScreen() {
     setActingKey(null);
     if (error) {
       setActionError(error.message);
+      showToast(error.message, 'error');
       return;
     }
     load();
-    if (successMessage) {
-      Alert.alert('강의 일정 확정', successMessage);
+    if (options?.alertMessage) {
+      Alert.alert('강의 일정 확정', options.alertMessage);
+    }
+    if (options?.toastMessage) {
+      showToast(options.toastMessage);
     }
   };
 
@@ -177,14 +183,14 @@ export default function InvitationsScreen() {
           p_invitation_mentor_id: invitationMentorId,
           p_event_row_id: eventRowId,
         }),
-      '강의 일정이 확정되었습니다. 마이페이지-강의 일정에서 확인해주세요.'
+      { alertMessage: '강의 일정이 확정되었습니다. 마이페이지-강의 일정에서 확인해주세요.' }
     );
 
   const acceptAll = (invitationMentorId: string) =>
     runAction(
       `${invitationMentorId}-all`,
       () => supabase.rpc('accept_invitation_all', { p_invitation_mentor_id: invitationMentorId }),
-      '강의 일정이 확정되었습니다. 마이페이지-강의 일정에서 확인해주세요.'
+      { alertMessage: '강의 일정이 확정되었습니다. 마이페이지-강의 일정에서 확인해주세요.' }
     );
 
   const declineInvitation = (invitationMentorId: string) => {
@@ -194,8 +200,10 @@ export default function InvitationsScreen() {
         text: '거절',
         style: 'destructive',
         onPress: () =>
-          runAction(`${invitationMentorId}-decline`, () =>
-            supabase.rpc('decline_invitation', { p_invitation_mentor_id: invitationMentorId })
+          runAction(
+            `${invitationMentorId}-decline`,
+            () => supabase.rpc('decline_invitation', { p_invitation_mentor_id: invitationMentorId }),
+            { toastMessage: '요청을 거절했습니다.' }
           ),
       },
     ]);
