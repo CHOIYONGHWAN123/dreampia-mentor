@@ -107,7 +107,7 @@ export function ProgramUnitPicker({
         placeholder="프로그램 선택"
       />
 
-      {value.occupationProgramId && unleveledUnits.length === 0 && (
+      {!!value.occupationProgramId && unleveledUnits.length === 0 && (
         <ThemedView style={styles.chipRow}>
           {availableLevels.length > 0 ? (
             availableLevels.map((level) => {

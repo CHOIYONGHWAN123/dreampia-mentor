@@ -89,7 +89,7 @@ export function FieldSectionForm({
         </ThemedView>
       </ThemedView>
 
-      {section.occupationId && (
+      {!!section.occupationId && (
         <ThemedView style={styles.certificateSection}>
           <ThemedText style={styles.label}>자격증</ThemedText>
           <MultiFilePicker
@@ -105,7 +105,7 @@ export function FieldSectionForm({
         </ThemedView>
       )}
 
-      {section.occupationId && (
+      {!!section.occupationId && (
         <ThemedView style={styles.entries}>
           {section.programEntries.map((entry) => (
             <ProgramEntryForm
