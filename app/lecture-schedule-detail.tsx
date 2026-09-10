@@ -273,7 +273,6 @@ export default function LectureScheduleDetailScreen() {
           <Field label="행사구분" value={detail.event_category_name ?? '-'} />
           <Field label="학교/기관명" value={detail.institution_name ?? '-'} />
           <Field label="주소" value={detail.institution_address ?? '-'} />
-          <Field label="대상학년" value={detail.target_grade ?? '-'} />
           <Field label="교시" value={formatEventSchedules(detail.event_schedules)} />
           <LinkField label="학교 배치도" url={detail.floor_map_url} />
           <Field label="엘리베이터 유무" value={detail.has_elevator ?? '-'} />
