@@ -10,6 +10,7 @@ export type MentorProfile = {
   phone: string | null;
   is_authenticated: boolean;
   mentor_unique_code: string;
+  created_at: string;
 };
 
 type AuthContextValue = {
@@ -69,7 +70,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setIsMentorLoading(true);
     supabase
       .from('mentors')
-      .select('id, name, phone, is_authenticated, mentor_unique_code')
+      .select('id, name, phone, is_authenticated, mentor_unique_code, created_at')
       .eq('id', session.user.id)
       .maybeSingle()
       .then(async ({ data }) => {
@@ -93,7 +94,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
               terms_agreed_at: new Date().toISOString(),
               terms_version_id: typeof meta.terms_version_id === 'string' ? meta.terms_version_id : null,
             })
-            .select('id, name, phone, is_authenticated, mentor_unique_code')
+            .select('id, name, phone, is_authenticated, mentor_unique_code, created_at')
             .single();
           data = healed ?? null;
         }

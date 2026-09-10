@@ -1,14 +1,17 @@
 import { Link } from 'expo-router';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
+import { CountBadge } from '@/components/count-badge';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/contexts/auth-context';
+import { useMentorTodoCounts } from '@/lib/mentor-todos';
 
 export default function MyPageScreen() {
   const { session, mentor, signOut } = useAuth();
+  const { counts } = useMentorTodoCounts();
 
   return (
     <ParallaxScrollView
@@ -52,12 +55,53 @@ export default function MyPageScreen() {
         </Link>
       )}
 
+      <ThemedText type="subtitle" style={styles.sectionTitle}>
+        할 일
+      </ThemedText>
+
       <Link href="/invitations" asChild>
         <TouchableOpacity style={styles.menuItem}>
           <ThemedText type="defaultSemiBold">강의요청</ThemedText>
-          <IconSymbol name="chevron.right" size={18} color="#687076" />
+          <View style={styles.menuRight}>
+            <CountBadge count={counts.invitations} />
+            <IconSymbol name="chevron.right" size={18} color="#687076" />
+          </View>
         </TouchableOpacity>
       </Link>
+
+      <Link href="/notices" asChild>
+        <TouchableOpacity style={styles.menuItem}>
+          <ThemedText type="defaultSemiBold">공지사항</ThemedText>
+          <View style={styles.menuRight}>
+            <CountBadge count={counts.announcements} />
+            <IconSymbol name="chevron.right" size={18} color="#687076" />
+          </View>
+        </TouchableOpacity>
+      </Link>
+
+      <Link href="/criminal-record-todo" asChild>
+        <TouchableOpacity style={styles.menuItem}>
+          <ThemedText type="defaultSemiBold">회보서 등록</ThemedText>
+          <View style={styles.menuRight}>
+            <CountBadge count={counts.criminalRecord} />
+            <IconSymbol name="chevron.right" size={18} color="#687076" />
+          </View>
+        </TouchableOpacity>
+      </Link>
+
+      <Link href="/event-photos-todo" asChild>
+        <TouchableOpacity style={styles.menuItem}>
+          <ThemedText type="defaultSemiBold">행사사진등록</ThemedText>
+          <View style={styles.menuRight}>
+            <CountBadge count={counts.eventPhotos} />
+            <IconSymbol name="chevron.right" size={18} color="#687076" />
+          </View>
+        </TouchableOpacity>
+      </Link>
+
+      <ThemedText type="subtitle" style={styles.sectionTitle}>
+        메뉴
+      </ThemedText>
 
       <Link href="/lecture-schedule" asChild>
         <TouchableOpacity style={styles.menuItem}>
@@ -139,6 +183,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
   },
+  sectionTitle: {
+    fontSize: 15,
+    marginTop: 8,
+    marginBottom: 4,
+  },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -147,5 +196,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e2e2e2',
     marginBottom: 16,
+  },
+  menuRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
 });

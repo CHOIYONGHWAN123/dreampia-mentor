@@ -77,6 +77,10 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         <Stack.Screen name="invitations" options={{ title: '강의요청' }} />
+        <Stack.Screen name="notices" options={{ title: '공지사항' }} />
+        <Stack.Screen name="notice-detail" options={{ title: '공지사항' }} />
+        <Stack.Screen name="criminal-record-todo" options={{ title: '회보서 등록' }} />
+        <Stack.Screen name="event-photos-todo" options={{ title: '행사사진등록' }} />
         <Stack.Screen name="lecture-schedule" options={{ title: '강의 일정' }} />
         <Stack.Screen name="lecture-schedule-detail" options={{ title: '강의 상세' }} />
         <Stack.Screen name="field-operator-event-detail" options={{ title: '현장운영 상세' }} />
