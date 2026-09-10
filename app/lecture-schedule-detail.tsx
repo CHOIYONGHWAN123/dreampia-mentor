@@ -307,7 +307,6 @@ export default function LectureScheduleDetailScreen() {
           <Field label="요청 직업군" value={detail.occupation_name ?? '-'} />
           <Field label="프로그램" value={detail.program_name ?? '-'} />
           <Field label="강사명" value={detail.mentor_name ?? '-'} />
-          <Field label="연락처" value={detail.mentor_phone ?? '-'} />
           <Field label="강의실" value={detail.classroom ?? '-'} />
           <Field label="대기실" value={detail.instructor_waiting_room ?? '-'} />
           {isOwn && (
