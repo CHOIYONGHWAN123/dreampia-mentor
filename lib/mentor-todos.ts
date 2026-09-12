@@ -3,6 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
 
 import { useAuth } from '@/contexts/auth-context';
+import { fetchUnseenNoticeCount } from '@/lib/notices';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/supabase';
 
@@ -84,14 +85,11 @@ async function fetchPendingInvitationCount(): Promise<number> {
 
 // 마지막으로 공지사항 화면을 연 시각(로컬 저장) 이후 올라온 공지만 센다. 아직 한 번도 연 적이
 // 없으면 가입일을 기준으로 삼아, 신규 멘토가 가입 이전의 과거 공지까지 안읽음으로 보지 않게 한다.
+// 전체 공지(announcements) + 내가 배정된 행사의 공지(event_notices)를 합산한 개수다.
 async function fetchUnseenAnnouncementCount(mentorCreatedAt: string): Promise<number> {
   const lastSeen = await getLastSeenAnnouncementsAt();
   const since = lastSeen ?? mentorCreatedAt;
-  const { count } = await supabase
-    .from('announcements')
-    .select('id', { count: 'exact', head: true })
-    .gt('created_at', since);
-  return count ?? 0;
+  return fetchUnseenNoticeCount(since);
 }
 
 export type MentorTodoCounts = {

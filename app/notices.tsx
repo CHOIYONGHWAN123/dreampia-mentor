@@ -5,11 +5,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useThemeColor } from '@/hooks/use-theme-color';
 import { markAnnouncementsSeenNow } from '@/lib/mentor-todos';
-import { supabase } from '@/lib/supabase';
-import type { Database } from '@/types/supabase';
-
-type Announcement = Database['public']['Tables']['announcements']['Row'];
+import { fetchNotices, type NoticeItem } from '@/lib/notices';
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -18,25 +16,18 @@ function formatDate(iso: string) {
 
 export default function NoticesScreen() {
   const router = useRouter();
-  const [items, setItems] = useState<Announcement[]>([]);
+  const [items, setItems] = useState<NoticeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const tint = useThemeColor({}, 'tint');
 
   const load = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('announcements')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      setLoadError(error.message);
-    } else {
-      setLoadError(null);
-      setItems(data ?? []);
-      // 목록을 열람하면 그 시점까지의 공지는 모두 확인한 것으로 본다.
-      markAnnouncementsSeenNow();
-    }
+    const { items: data, error } = await fetchNotices();
+    setItems(data);
+    setLoadError(error);
+    // 목록을 열람하면 그 시점까지의 공지(전체 + 행사별)는 모두 확인한 것으로 본다.
+    markAnnouncementsSeenNow();
     setLoading(false);
     setRefreshing(false);
   }, []);
@@ -64,7 +55,7 @@ export default function NoticesScreen() {
     <SafeAreaView style={styles.safeArea}>
       <FlatList
         data={items}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => `${item.kind}-${item.id}`}
         contentContainerStyle={styles.listContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListHeaderComponent={loadError ? <ThemedText style={styles.error}>{loadError}</ThemedText> : null}
@@ -76,11 +67,18 @@ export default function NoticesScreen() {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.item}
-            onPress={() => router.push({ pathname: '/notice-detail', params: { id: item.id } })}>
+            onPress={() =>
+              router.push({ pathname: '/notice-detail', params: { id: item.id, kind: item.kind } })
+            }>
+            {item.kind === 'event' && item.eventName && (
+              <ThemedText style={[styles.eventBadge, { color: tint }]} numberOfLines={1}>
+                {item.eventName}
+              </ThemedText>
+            )}
             <ThemedText type="defaultSemiBold" numberOfLines={1}>
               {item.title}
             </ThemedText>
-            <ThemedText style={styles.date}>{formatDate(item.created_at)}</ThemedText>
+            <ThemedText style={styles.date}>{formatDate(item.createdAt)}</ThemedText>
           </TouchableOpacity>
         )}
       />
@@ -101,5 +99,6 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 4,
   },
+  eventBadge: { fontSize: 12, fontWeight: '700' },
   date: { fontSize: 12, color: '#687076' },
 });
